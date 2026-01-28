@@ -594,7 +594,8 @@
 
     function extractAttributes(xmlDoc) {
       const excludedAttributes = [
-        'authnmethodsreferences'
+        'authnmethodsreferences',
+        'identityprovider'
       ];
 
       const attributes = xmlDoc.querySelectorAll('Attribute, *|Attribute');
