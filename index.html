@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAML Response Decoder</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f6f8fa;
+      color: #24292f;
+    }
+    h1 {
+      color: #24292f;
+      border-bottom: 1px solid #d0d7de;
+      padding-bottom: 10px;
+    }
+    .input-section {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      padding: 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #0969da;
+      box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.15);
+    }
+    button {
+      background: #2da44e;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #2c974b;
+    }
+    button.secondary {
+      background: #6e7781;
+    }
+    button.secondary:hover {
+      background: #57606a;
+    }
+    .results {
+      display: none;
+    }
+    .results.show {
+      display: block;
+    }
+    .section {
+      background: white;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .section-header {
+      background: #f6f8fa;
+      padding: 12px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid #d0d7de;
+    }
+    .section-body {
+      padding: 16px;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    .field:last-child {
+      margin-bottom: 0;
+    }
+    .field-label {
+      font-size: 12px;
+      color: #57606a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .field-value {
+      font-family: monospace;
+      font-size: 14px;
+      word-break: break-all;
+      background: #f6f8fa;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .field-value.valid {
+      background: #dafbe1;
+      color: #1a7f37;
+    }
+    .field-value.expired {
+      background: #ffebe9;
+      color: #cf222e;
+    }
+    .field-value.warning {
+      background: #fff8c5;
+      color: #9a6700;
+    }
+    .error {
+      background: #ffebe9;
+      border: 1px solid #ff8182;
+      color: #cf222e;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+    .privacy-notice {
+      background: #ddf4ff;
+      border: 1px solid #54aeff;
+      color: #0969da;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .help-section {
+      background: white;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+    .help-section summary {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 600;
+      user-select: none;
+    }
+    .help-section summary:hover {
+      background: #f6f8fa;
+    }
+    .help-content {
+      padding: 0 16px 16px 16px;
+      border-top: 1px solid #d0d7de;
+    }
+    .help-content h3 {
+      font-size: 14px;
+      margin: 16px 0 8px 0;
+    }
+    .help-content ol, .help-content ul {
+      margin: 0;
+      padding-left: 24px;
+    }
+    .help-content li {
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+    .help-content code {
+      background: #f6f8fa;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .help-content a {
+      color: #0969da;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔐 SAML Response Decoder</h1>
+  <p class="privacy-notice">🔒 All decoding happens locally in your browser. No data is sent to any server.</p>
+  
+  <details class="help-section">
+    <summary>📖 How to capture a SAML Response</summary>
+    <div class="help-content">
+      <h3>Chrome / Edge</h3>
+      <ol>
+        <li>Open Developer Tools (<code>F12</code> or <code>Cmd+Option+I</code> on Mac)</li>
+        <li>Go to the <strong>Network</strong> tab</li>
+        <li>Check <strong>Preserve log</strong></li>
+        <li>Initiate the SAML login flow (sign in to the app)</li>
+        <li>Look for a POST request to a URL containing <code>/saml/consume</code> or <code>/acs</code></li>
+        <li>Click on the request, go to the <strong>Payload</strong> tab</li>
+        <li>Find the <code>SAMLResponse</code> parameter and copy its value</li>
+      </ol>
+      <h3>Firefox</h3>
+      <ol>
+        <li>Open Developer Tools (<code>F12</code> or <code>Cmd+Option+I</code> on Mac)</li>
+        <li>Go to the <strong>Network</strong> tab and check <strong>Persist Logs</strong></li>
+        <li>Initiate the SAML login flow</li>
+        <li>Look for the POST request to the ACS URL</li>
+        <li>Click on the request, go to the <strong>Request</strong> tab</li>
+        <li>Find and copy the <code>SAMLResponse</code> value</li>
+      </ol>
+      <h3>Browser Extensions</h3>
+      <ul>
+        <li><a href="https://addons.mozilla.org/en-US/firefox/addon/saml-tracer/" target="_blank" rel="noopener">SAML-tracer</a> (Firefox)</li>
+        <li><a href="https://chrome.google.com/webstore/detail/saml-chrome-panel/paijfdbeoenhembfhkhllainmocckace" target="_blank" rel="noopener">SAML Chrome Panel</a> (Chrome)</li>
+      </ul>
+    </div>
+  </details>
+
+  <div class="input-section">
+    <label for="samlInput">Paste Base64-encoded SAML Response:</label>
+    <textarea id="samlInput" placeholder="PD94bWwgdmVyc2lvbj0iMS4wIi..."></textarea>
+    <div style="margin-top: 12px;">
+      <button onclick="decode()">Decode</button>
+      <button class="secondary" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div id="error" class="error" style="display: none;"></div>
+
+  <div id="results" class="results">
+    <div class="section">
+      <div class="section-header">📜 X.509 Certificate</div>
+      <div class="section-body">
+        <div class="field">
+          <div class="field-label">Issuer</div>
+          <div class="field-value" id="certIssuer">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Subject</div>
+          <div class="field-value" id="certSubject">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Valid From</div>
+          <div class="field-value" id="certNotBefore">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Valid Until</div>
+          <div class="field-value" id="certNotAfter">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Signature Algorithm</div>
+          <div class="field-value" id="certSigAlg">-</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">🎫 SAML Assertion</div>
+      <div class="section-body">
+        <div class="field">
+          <div class="field-label">NameID Format</div>
+          <div class="field-value" id="nameIdFormat">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label">NameID Value</div>
+          <div class="field-value" id="nameIdValue">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Issuer</div>
+          <div class="field-value" id="samlIssuer">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Destination</div>
+          <div class="field-value" id="samlDestination">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Not On Or After</div>
+          <div class="field-value" id="notOnOrAfter">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Status</div>
+          <div class="field-value" id="samlStatus">-</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="attributesSection" style="display: none;">
+      <div class="section-header">🏷️ SAML Attributes</div>
+      <div class="section-body" id="attributesBody">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // OID mappings for X.509 certificate parsing
+    const OID_MAP = {
+      '2.5.4.6': 'C',
+      '2.5.4.8': 'ST',
+      '2.5.4.7': 'L',
+      '2.5.4.10': 'O',
+      '2.5.4.11': 'OU',
+      '2.5.4.3': 'CN',
+      '1.2.840.113549.1.9.1': 'emailAddress'
+    };
+
+    const SIG_ALG_MAP = {
+      '1.2.840.113549.1.1.5': 'sha1WithRSAEncryption',
+      '1.2.840.113549.1.1.11': 'sha256WithRSAEncryption',
+      '1.2.840.113549.1.1.12': 'sha384WithRSAEncryption',
+      '1.2.840.113549.1.1.13': 'sha512WithRSAEncryption',
+      '1.2.840.10045.4.3.2': 'ecdsa-with-SHA256',
+      '1.2.840.10045.4.3.3': 'ecdsa-with-SHA384',
+      '1.2.840.10045.4.3.4': 'ecdsa-with-SHA512'
+    };
+
+    function decode() {
+      const input = document.getElementById('samlInput').value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultsDiv = document.getElementById('results');
+      
+      errorDiv.style.display = 'none';
+      resultsDiv.classList.remove('show');
+
+      if (!input) {
+        showError('Please enter a SAML Response');
+        return;
+      }
+
+      try {
+        // Decode base64
+        const xmlString = atob(input);
+        
+        // Parse XML
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+        
+        // Check for parse errors
+        const parseError = xmlDoc.querySelector('parsererror');
+        if (parseError) {
+          throw new Error('Invalid XML: ' + parseError.textContent);
+        }
+
+        // Extract certificate
+        const certElement = xmlDoc.querySelector('X509Certificate');
+        if (certElement) {
+          const certBase64 = certElement.textContent.replace(/\s/g, '');
+          parseCertificate(certBase64);
+        }
+
+        // Extract SAML info
+        extractSamlInfo(xmlDoc);
+
+        resultsDiv.classList.add('show');
+      } catch (e) {
+        showError('Failed to decode: ' + e.message);
+      }
+    }
+
+    function showError(message) {
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+    }
+
+    function parseCertificate(base64Cert) {
+      try {
+        const binary = atob(base64Cert);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+
+        // Parse ASN.1 DER structure
+        const cert = parseASN1(bytes, 0);
+        
+        // Certificate structure: SEQUENCE { tbsCertificate, signatureAlgorithm, signature }
+        const tbsCert = cert.children[0];
+        const sigAlgSeq = cert.children[1];
+        
+        // TBS Certificate structure
+        let idx = 0;
+        
+        // Version (optional, tagged [0])
+        if (tbsCert.children[idx].tag === 0xA0) {
+          idx++;
+        }
+        
+        // Serial number
+        idx++;
+        
+        // Signature algorithm
+        idx++;
+        
+        // Issuer
+        const issuer = parseName(tbsCert.children[idx]);
+        document.getElementById('certIssuer').textContent = issuer;
+        idx++;
+        
+        // Validity
+        const validity = tbsCert.children[idx];
+        const notBefore = parseTime(validity.children[0]);
+        const notAfter = parseTime(validity.children[1]);
+        
+        const notBeforeEl = document.getElementById('certNotBefore');
+        const notAfterEl = document.getElementById('certNotAfter');
+        
+        notBeforeEl.textContent = notBefore.toUTCString();
+        notAfterEl.textContent = notAfter.toUTCString();
+        
+        // Check validity
+        const now = new Date();
+        if (now < notBefore) {
+          notBeforeEl.classList.add('warning');
+          notBeforeEl.textContent += ' (not yet valid)';
+        }
+        if (now > notAfter) {
+          notAfterEl.classList.add('expired');
+          notAfterEl.textContent += ' (EXPIRED)';
+        } else {
+          notAfterEl.classList.add('valid');
+        }
+        
+        idx++;
+        
+        // Subject
+        const subject = parseName(tbsCert.children[idx]);
+        document.getElementById('certSubject').textContent = subject;
+        
+        // Signature algorithm OID
+        const sigAlgOid = parseOID(sigAlgSeq.children[0].bytes);
+        document.getElementById('certSigAlg').textContent = SIG_ALG_MAP[sigAlgOid] || sigAlgOid;
+        
+      } catch (e) {
+        console.error('Certificate parsing error:', e);
+        document.getElementById('certIssuer').textContent = 'Failed to parse certificate';
+      }
+    }
+
+    function parseASN1(bytes, offset) {
+      const tag = bytes[offset];
+      let len = bytes[offset + 1];
+      let lenBytes = 1;
+      
+      if (len & 0x80) {
+        const numLenBytes = len & 0x7f;
+        len = 0;
+        for (let i = 0; i < numLenBytes; i++) {
+          len = (len << 8) | bytes[offset + 2 + i];
+        }
+        lenBytes = 1 + numLenBytes;
+      }
+      
+      const contentStart = offset + 1 + lenBytes;
+      const contentBytes = bytes.slice(contentStart, contentStart + len);
+      
+      const result = {
+        tag: tag,
+        length: len,
+        bytes: contentBytes,
+        totalLength: 1 + lenBytes + len
+      };
+      
+      // Parse constructed types (SEQUENCE, SET, or context-specific)
+      if ((tag & 0x20) || (tag >= 0xA0 && tag <= 0xAF)) {
+        result.children = [];
+        let childOffset = 0;
+        while (childOffset < len) {
+          const child = parseASN1(contentBytes, childOffset);
+          result.children.push(child);
+          childOffset += child.totalLength;
+        }
+      }
+      
+      return result;
+    }
+
+    function parseName(nameSeq) {
+      const parts = [];
+      for (const rdn of nameSeq.children) {
+        const atv = rdn.children[0];
+        const oid = parseOID(atv.children[0].bytes);
+        const value = decodeString(atv.children[1]);
+        const name = OID_MAP[oid] || oid;
+        parts.push(name + '=' + value);
+      }
+      return parts.join(', ');
+    }
+
+    function parseOID(bytes) {
+      const parts = [];
+      parts.push(Math.floor(bytes[0] / 40));
+      parts.push(bytes[0] % 40);
+      
+      let value = 0;
+      for (let i = 1; i < bytes.length; i++) {
+        value = (value << 7) | (bytes[i] & 0x7f);
+        if (!(bytes[i] & 0x80)) {
+          parts.push(value);
+          value = 0;
+        }
+      }
+      return parts.join('.');
+    }
+
+    function decodeString(node) {
+      const decoder = new TextDecoder('utf-8');
+      return decoder.decode(node.bytes);
+    }
+
+    function parseTime(node) {
+      const str = decodeString(node);
+      if (node.tag === 0x17) {
+        // UTCTime: YYMMDDHHMMSSZ
+        let year = parseInt(str.substr(0, 2));
+        year += year >= 50 ? 1900 : 2000;
+        const month = parseInt(str.substr(2, 2)) - 1;
+        const day = parseInt(str.substr(4, 2));
+        const hour = parseInt(str.substr(6, 2));
+        const min = parseInt(str.substr(8, 2));
+        const sec = parseInt(str.substr(10, 2));
+        return new Date(Date.UTC(year, month, day, hour, min, sec));
+      } else {
+        // GeneralizedTime: YYYYMMDDHHMMSSZ
+        const year = parseInt(str.substr(0, 4));
+        const month = parseInt(str.substr(4, 2)) - 1;
+        const day = parseInt(str.substr(6, 2));
+        const hour = parseInt(str.substr(8, 2));
+        const min = parseInt(str.substr(10, 2));
+        const sec = parseInt(str.substr(12, 2));
+        return new Date(Date.UTC(year, month, day, hour, min, sec));
+      }
+    }
+
+    function extractSamlInfo(xmlDoc) {
+      // NameID
+      const nameId = xmlDoc.querySelector('NameID') || xmlDoc.querySelector('*|NameID');
+      if (nameId) {
+        document.getElementById('nameIdFormat').textContent = nameId.getAttribute('Format') || 'Not specified';
+        document.getElementById('nameIdValue').textContent = nameId.textContent;
+      }
+
+      // Issuer (from Response or Assertion)
+      const issuer = xmlDoc.querySelector('Issuer') || xmlDoc.querySelector('*|Issuer');
+      if (issuer) {
+        document.getElementById('samlIssuer').textContent = issuer.textContent;
+      }
+
+      // Destination
+      const response = xmlDoc.documentElement;
+      const destination = response.getAttribute('Destination');
+      if (destination) {
+        document.getElementById('samlDestination').textContent = destination;
+      }
+
+      // NotOnOrAfter from Conditions or SubjectConfirmationData
+      const conditions = xmlDoc.querySelector('Conditions') || xmlDoc.querySelector('*|Conditions');
+      const subjectConfData = xmlDoc.querySelector('SubjectConfirmationData') || xmlDoc.querySelector('*|SubjectConfirmationData');
+      
+      let notOnOrAfter = null;
+      if (conditions) {
+        notOnOrAfter = conditions.getAttribute('NotOnOrAfter');
+      }
+      if (!notOnOrAfter && subjectConfData) {
+        notOnOrAfter = subjectConfData.getAttribute('NotOnOrAfter');
+      }
+      
+      if (notOnOrAfter) {
+        const notOnOrAfterEl = document.getElementById('notOnOrAfter');
+        const expiry = new Date(notOnOrAfter);
+        const now = new Date();
+        
+        notOnOrAfterEl.textContent = expiry.toUTCString();
+        if (now > expiry) {
+          notOnOrAfterEl.classList.add('expired');
+          notOnOrAfterEl.textContent += ' (EXPIRED)';
+        } else {
+          notOnOrAfterEl.classList.add('valid');
+          notOnOrAfterEl.textContent += ' (valid)';
+        }
+      }
+
+      // Status
+      const statusCode = xmlDoc.querySelector('StatusCode') || xmlDoc.querySelector('*|StatusCode');
+      if (statusCode) {
+        const statusValue = statusCode.getAttribute('Value');
+        const statusEl = document.getElementById('samlStatus');
+        statusEl.textContent = statusValue;
+        if (statusValue.includes('Success')) {
+          statusEl.classList.add('valid');
+        } else {
+          statusEl.classList.add('expired');
+        }
+      }
+
+      // Attributes
+      extractAttributes(xmlDoc);
+    }
+
+    function extractAttributes(xmlDoc) {
+      const excludedAttributes = [
+        'authnmethodsreferences'
+      ];
+
+      const attributes = xmlDoc.querySelectorAll('Attribute, *|Attribute');
+      const attributesSection = document.getElementById('attributesSection');
+      const attributesBody = document.getElementById('attributesBody');
+      
+      // Clear previous attributes
+      attributesBody.innerHTML = '';
+      
+      if (attributes.length === 0) {
+        attributesSection.style.display = 'none';
+        return;
+      }
+
+      let hasVisibleAttributes = false;
+      
+      attributes.forEach(attr => {
+        const name = attr.getAttribute('Name') || '';
+        
+        // Get friendly name from the full URL/URN
+        let friendlyName = name;
+        if (name.includes('/')) {
+          friendlyName = name.split('/').pop();
+        } else if (name.includes(':')) {
+          friendlyName = name.split(':').pop();
+        }
+        
+        // Skip excluded attributes
+        if (excludedAttributes.includes(friendlyName.toLowerCase())) {
+          return;
+        }
+        
+        const valueEl = attr.querySelector('AttributeValue, *|AttributeValue');
+        const value = valueEl ? valueEl.textContent : '';
+        
+        if (value) {
+          hasVisibleAttributes = true;
+          const fieldDiv = document.createElement('div');
+          fieldDiv.className = 'field';
+          fieldDiv.innerHTML = `
+            <div class="field-label">${escapeHtml(friendlyName)}</div>
+            <div class="field-value">${escapeHtml(value)}</div>
+          `;
+          attributesBody.appendChild(fieldDiv);
+        }
+      });
+
+      attributesSection.style.display = hasVisibleAttributes ? 'block' : 'none';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function clearAll() {
+      document.getElementById('samlInput').value = '';
+      document.getElementById('error').style.display = 'none';
+      document.getElementById('results').classList.remove('show');
+      
+      // Reset all field values and classes
+      const fields = document.querySelectorAll('.field-value');
+      fields.forEach(f => {
+        f.textContent = '-';
+        f.classList.remove('valid', 'expired', 'warning');
+      });
+      
+      // Clear and hide attributes section
+      document.getElementById('attributesBody').innerHTML = '';
+      document.getElementById('attributesSection').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
