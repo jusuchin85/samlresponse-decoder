@@ -253,6 +253,17 @@
     .copy-btn.copied {
       background: #2da44e;
     }
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
     .xml-raw {
       margin-top: 8px;
       padding: 12px;
@@ -319,7 +330,8 @@
         <details class="xml-details">
           <summary>View decoded SAML Response XML</summary>
           <div class="xml-container">
-            <button class="copy-btn" onclick="copyXml()" aria-live="polite"><i class="fa-regular fa-copy"></i> Copy</button>
+            <button class="copy-btn" onclick="copyXml()"><i class="fa-regular fa-copy"></i> Copy</button>
+            <span id="copyStatus" class="visually-hidden" aria-live="polite"></span>
             <pre class="xml-raw" id="xmlRaw"></pre>
           </div>
         </details>
@@ -536,21 +548,26 @@
 
     function copyXml() {
       const xmlContent = document.getElementById('xmlRaw').textContent;
+      const statusEl = document.getElementById('copyStatus');
       navigator.clipboard.writeText(xmlContent).then(function() {
         const btn = document.querySelector('.copy-btn');
         btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
         btn.classList.add('copied');
+        statusEl.textContent = 'XML copied to clipboard';
         setTimeout(function() {
           btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
           btn.classList.remove('copied');
+          statusEl.textContent = '';
         }, 2000);
       }).catch(function(error) {
         console.error('Failed to copy XML to clipboard:', error);
         const btn = document.querySelector('.copy-btn');
         btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
         btn.classList.remove('copied');
+        statusEl.textContent = 'Failed to copy XML to clipboard';
         setTimeout(function() {
           btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+          statusEl.textContent = '';
         }, 2000);
       });
     }
