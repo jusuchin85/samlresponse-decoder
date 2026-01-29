@@ -551,7 +551,8 @@
                   .replace(/&/g, '&amp;')
                   .replace(/"/g, '&quot;')
                   .replace(/</g, '&lt;')
-                  .replace(/>/g, '&gt;');
+                  .replace(/>/g, '&gt;')
+                  .replace(/'/g, '&apos;');
                 tagOpen += ' ' + attr.name + '="' + escapedValue + '"';
               }
 
@@ -596,11 +597,18 @@
               break;
             }
             case Node.CDATA_SECTION_NODE: {
-              output += indent + '<![CDATA[' + node.nodeValue + ']]>\n';
+              const safeCdata = String(node.nodeValue || '').replace(/]]>/g, ']]]]><![CDATA[>');
+              output += indent + '<![CDATA[' + safeCdata + ']]>\n';
               break;
             }
             case Node.COMMENT_NODE: {
-              output += indent + '<!--' + node.nodeValue + '-->\n';
+              let commentText = node.nodeValue || '';
+              // XML comments must not contain "--" and must not end with "-"
+              commentText = commentText.replace(/--/g, '- -');
+              if (commentText.endsWith('-')) {
+                commentText += ' ';
+              }
+              output += indent + '<!--' + commentText + '-->\n';
               break;
             }
             case Node.DOCUMENT_NODE:
@@ -624,7 +632,7 @@
       }
     }
 
-    var copyTimeoutId = null;
+    let copyTimeoutId = null;
     
     function copyXml() {
       const xmlContent = document.getElementById('xmlRaw').textContent;
