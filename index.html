@@ -1052,6 +1052,18 @@
       // Close all <details> elements within the results so they are collapsed next time
       const detailsElements = document.querySelectorAll('#results details');
       detailsElements.forEach(d => d.removeAttribute('open'));
+      
+      // Clear any pending copy timeout and reset copy button state
+      if (copyTimeoutId) {
+        clearTimeout(copyTimeoutId);
+        copyTimeoutId = null;
+      }
+      const copyBtn = document.querySelector('.copy-btn');
+      if (copyBtn) {
+        copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        copyBtn.classList.remove('copied');
+      }
+      document.getElementById('copyStatus').textContent = '';
     }
   </script>
 </body>
