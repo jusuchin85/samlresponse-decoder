@@ -192,6 +192,28 @@
     .footer a:hover {
       text-decoration: underline;
     }
+    .cert-details {
+      margin-top: 12px;
+    }
+    .cert-details summary {
+      cursor: pointer;
+      font-size: 13px;
+      color: #0969da;
+      user-select: none;
+    }
+    .cert-details summary:hover {
+      text-decoration: underline;
+    }
+    .cert-raw {
+      margin-top: 8px;
+      padding: 12px;
+      background: #f6f8fa;
+      border-radius: 6px;
+      font-size: 11px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -263,6 +285,10 @@
           <div class="field-label">Signature Algorithm</div>
           <div class="field-value" id="certSigAlg">-</div>
         </div>
+        <details class="cert-details" id="certDetails" style="display: none;">
+          <summary>View raw certificate (PEM)</summary>
+          <pre class="cert-raw" id="certRaw"></pre>
+        </details>
       </div>
     </div>
 
@@ -361,6 +387,7 @@
         if (certElement) {
           const certBase64 = certElement.textContent.replace(/\s/g, '');
           parseCertificate(certBase64);
+          displayRawCertificate(certBase64);
         }
 
         // Extract SAML info
@@ -376,6 +403,18 @@
       const errorDiv = document.getElementById('error');
       errorDiv.textContent = message;
       errorDiv.style.display = 'block';
+    }
+
+    function displayRawCertificate(base64Cert) {
+      // Format as PEM
+      const pemLines = ['-----BEGIN CERTIFICATE-----'];
+      for (let i = 0; i < base64Cert.length; i += 64) {
+        pemLines.push(base64Cert.substring(i, i + 64));
+      }
+      pemLines.push('-----END CERTIFICATE-----');
+      
+      document.getElementById('certRaw').textContent = pemLines.join('\n');
+      document.getElementById('certDetails').style.display = 'block';
     }
 
     function parseCertificate(base64Cert) {
@@ -687,6 +726,10 @@
       // Clear and hide attributes section
       document.getElementById('attributesBody').innerHTML = '';
       document.getElementById('attributesSection').style.display = 'none';
+      
+      // Clear and hide certificate raw section
+      document.getElementById('certRaw').textContent = '';
+      document.getElementById('certDetails').style.display = 'none';
     }
   </script>
 </body>
