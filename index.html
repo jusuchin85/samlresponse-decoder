@@ -99,6 +99,11 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 4px;
+      cursor: help;
+      transition: color 0.2s ease;
+    }
+    .field-label[title]:hover {
+      color: #0969da;
     }
     .field-value {
       font-family: monospace;
@@ -214,6 +219,63 @@
       white-space: pre-wrap;
       word-break: break-all;
     }
+    .xml-details {
+      margin-top: 0;
+    }
+    .xml-details summary {
+      cursor: pointer;
+      font-size: 13px;
+      color: #0969da;
+      user-select: none;
+    }
+    .xml-details summary:hover {
+      text-decoration: underline;
+    }
+    .xml-container {
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #24292f;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .copy-btn:hover {
+      background: #32383f;
+    }
+    .copy-btn.copied {
+      background: #2da44e;
+    }
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .xml-raw {
+      margin-top: 8px;
+      padding: 12px;
+      background: #f6f8fa;
+      border-radius: 6px;
+      font-size: 11px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 400px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
@@ -262,27 +324,41 @@
   <div id="error" class="error" style="display: none;"></div>
 
   <div id="results" class="results">
+    <div class="section" id="rawXmlSection" style="display: none;">
+      <div class="section-header">📄 Raw XML</div>
+      <div class="section-body">
+        <details class="xml-details">
+          <summary>View decoded SAML Response XML</summary>
+          <div class="xml-container">
+            <button class="copy-btn" id="copyBtn" aria-label="Copy XML to clipboard"><i class="fa-regular fa-copy"></i> Copy</button>
+            <span id="copyStatus" class="visually-hidden" aria-live="polite"></span>
+            <pre class="xml-raw" id="xmlRaw"></pre>
+          </div>
+        </details>
+      </div>
+    </div>
+
     <div class="section">
       <div class="section-header">📜 X.509 Certificate</div>
       <div class="section-body">
         <div class="field">
-          <div class="field-label">Issuer</div>
+          <div class="field-label" title="The Certificate Authority (CA) or entity that issued this certificate">Issuer</div>
           <div class="field-value" id="certIssuer">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Subject</div>
+          <div class="field-label" title="The entity this certificate was issued to (usually the IdP)">Subject</div>
           <div class="field-value" id="certSubject">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Valid From</div>
+          <div class="field-label" title="The date/time when this certificate became valid">Valid From</div>
           <div class="field-value" id="certNotBefore">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Valid Until</div>
+          <div class="field-label" title="The date/time when this certificate expires — needs renewal before this date">Valid Until</div>
           <div class="field-value" id="certNotAfter">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Signature Algorithm</div>
+          <div class="field-label" title="The cryptographic algorithm used to sign this certificate">Signature Algorithm</div>
           <div class="field-value" id="certSigAlg">-</div>
         </div>
         <details class="cert-details" id="certDetails" style="display: none;">
@@ -296,27 +372,35 @@
       <div class="section-header">🎫 SAML Assertion</div>
       <div class="section-body">
         <div class="field">
-          <div class="field-label">NameID Format</div>
+          <div class="field-label" title="The format/type of the user identifier (e.g., email, persistent, transient)">NameID Format</div>
           <div class="field-value" id="nameIdFormat">-</div>
         </div>
         <div class="field">
-          <div class="field-label">NameID Value</div>
+          <div class="field-label" title="The unique identifier for the authenticated user">NameID Value</div>
           <div class="field-value" id="nameIdValue">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Issuer</div>
+          <div class="field-label" title="The SAML Identity Provider that issued this assertion">Issuer</div>
           <div class="field-value" id="samlIssuer">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Destination</div>
+          <div class="field-label" title="The URL where this SAML response should be delivered">Destination</div>
           <div class="field-value" id="samlDestination">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Not On Or After</div>
+          <div class="field-label" title="The time at which this assertion becomes valid — assertion cannot be used before this time">Not Before</div>
+          <div class="field-value" id="notBefore">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label" title="The exact moment the user authenticated with the IdP (entered password, etc.)">Auth Instant</div>
+          <div class="field-value" id="authnInstant">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label" title="The expiry time — assertion cannot be used on or after this time">Not On Or After</div>
           <div class="field-value" id="notOnOrAfter">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Status</div>
+          <div class="field-label" title="Whether the SAML authentication was successful">Status</div>
           <div class="field-value" id="samlStatus">-</div>
         </div>
       </div>
@@ -393,6 +477,9 @@
         // Extract SAML info
         extractSamlInfo(xmlDoc);
 
+        // Display raw XML
+        displayRawXml(xmlString);
+
         resultsDiv.classList.add('show');
       } catch (e) {
         showError('Failed to decode: ' + e.message);
@@ -405,6 +492,13 @@
       errorDiv.style.display = 'block';
     }
 
+    function formatUTC(date) {
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toUTCString().replace('GMT', 'UTC');
+    }
+
     function displayRawCertificate(base64Cert) {
       // Format as PEM
       const pemLines = ['-----BEGIN CERTIFICATE-----'];
@@ -415,6 +509,184 @@
       
       document.getElementById('certRaw').textContent = pemLines.join('\n');
       document.getElementById('certDetails').style.display = 'block';
+    }
+
+    function displayRawXml(xmlString) {
+      // Pretty print XML
+      const formatted = formatXml(xmlString);
+      document.getElementById('xmlRaw').textContent = formatted;
+      document.getElementById('rawXmlSection').style.display = 'block';
+      // Reset details state to closed on new decode
+      document.querySelector('#rawXmlSection .xml-details').removeAttribute('open');
+    }
+
+    function formatXml(xml) {
+      if (!xml || xml.length < 3) {
+        return xml || '';
+      }
+
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xml, 'application/xml');
+
+        // If the XML is not well-formed, DOMParser will create a parsererror element
+        const parseError = doc.getElementsByTagName('parsererror')[0];
+        if (parseError) {
+          // Fall back to the original string if parsing fails
+          return xml;
+        }
+
+        const indentUnit = '  ';
+
+        function serializeNode(node, depth) {
+          const indent = indentUnit.repeat(depth);
+          let output = '';
+
+          switch (node.nodeType) {
+            case Node.ELEMENT_NODE: {
+              let tagOpen = '<' + node.nodeName;
+              for (let i = 0; i < node.attributes.length; i++) {
+                const attr = node.attributes[i];
+                const escapedValue = attr.value
+                  .replace(/&/g, '&amp;')
+                  .replace(/"/g, '&quot;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;')
+                  .replace(/'/g, '&apos;');
+                tagOpen += ' ' + attr.name + '="' + escapedValue + '"';
+              }
+
+              const children = Array.prototype.slice.call(node.childNodes || []);
+              if (children.length === 0) {
+                // Self-closing tag for empty elements
+                output += indent + tagOpen + '/>\n';
+              } else {
+                // Determine if there is any element child (for newline placement)
+                const hasElementChild = children.some(function(child) {
+                  return child.nodeType === Node.ELEMENT_NODE;
+                });
+
+                output += indent + tagOpen + '>';
+                if (hasElementChild) {
+                  output += '\n';
+                }
+
+                children.forEach(function(child) {
+                  const childText = serializeNode(child, depth + 1);
+                  if (childText) {
+                    output += childText;
+                  }
+                });
+
+                if (hasElementChild) {
+                  output += indent;
+                }
+                output += '</' + node.nodeName + '>\n';
+              }
+              break;
+            }
+            case Node.TEXT_NODE: {
+              const text = node.nodeValue;
+              if (text && text.trim() !== '') {
+                const escapedText = text.trim()
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;');
+                output += escapedText;
+              }
+              break;
+            }
+            case Node.CDATA_SECTION_NODE: {
+              const safeCdata = String(node.nodeValue || '').replace(/]]>/g, ']]]]><![CDATA[>');
+              output += indent + '<![CDATA[' + safeCdata + ']]>\n';
+              break;
+            }
+            case Node.COMMENT_NODE: {
+              let commentText = node.nodeValue || '';
+              // XML comments must not contain "--" and must not end with "-"
+              commentText = commentText.replace(/--/g, '- -');
+              if (commentText.endsWith('-')) {
+                commentText += ' ';
+              }
+              output += indent + '<!--' + commentText + '-->\n';
+              break;
+            }
+            case Node.DOCUMENT_NODE:
+            case Node.DOCUMENT_FRAGMENT_NODE: {
+              Array.prototype.forEach.call(node.childNodes, function(child) {
+                output += serializeNode(child, depth);
+              });
+              break;
+            }
+            case Node.PROCESSING_INSTRUCTION_NODE: {
+              const target = node.target || '';
+              const data = node.nodeValue || '';
+              if (target) {
+                const content = data ? ' ' + data : '';
+                output += indent + '<?' + target + content + '?>\n';
+              }
+              break;
+            }
+            default:
+              break;
+          }
+
+          return output;
+        }
+
+        return serializeNode(doc, 0).trim();
+      } catch (e) {
+        // In case of any unexpected error, return the original XML
+        return xml;
+      }
+    }
+
+    let copyTimeoutId = null;
+    
+    function copyXml() {
+      const xmlContent = document.getElementById('xmlRaw').textContent;
+      const statusEl = document.getElementById('copyStatus');
+      const btn = document.querySelector('.copy-btn');
+
+      // Clear any pending timeout
+      if (copyTimeoutId) {
+        clearTimeout(copyTimeoutId);
+        copyTimeoutId = null;
+      }
+
+      // Check if Clipboard API is available
+      if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Not supported';
+        statusEl.textContent = 'Clipboard API not available. Please copy manually.';
+        copyTimeoutId = setTimeout(function() {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+          statusEl.textContent = '';
+          copyTimeoutId = null;
+        }, 3000);
+        return;
+      }
+
+      navigator.clipboard.writeText(xmlContent).then(function() {
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        btn.classList.add('copied');
+        statusEl.textContent = 'XML copied to clipboard';
+        copyTimeoutId = setTimeout(function() {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+          btn.classList.remove('copied');
+          statusEl.textContent = '';
+          copyTimeoutId = null;
+        }, 2000);
+      }).catch(function(error) {
+        console.error('Failed to copy XML to clipboard:', error);
+        btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
+        btn.classList.remove('copied');
+        statusEl.textContent = 'Failed to copy XML to clipboard';
+        copyTimeoutId = setTimeout(function() {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+          statusEl.textContent = '';
+          copyTimeoutId = null;
+        }, 2000);
+      });
     }
 
     function parseCertificate(base64Cert) {
@@ -459,14 +731,18 @@
         const notBeforeEl = document.getElementById('certNotBefore');
         const notAfterEl = document.getElementById('certNotAfter');
         
-        notBeforeEl.textContent = notBefore.toUTCString();
-        notAfterEl.textContent = notAfter.toUTCString();
+        notBeforeEl.textContent = formatUTC(notBefore);
+        notAfterEl.textContent = formatUTC(notAfter);
         
         // Check validity
         const now = new Date();
+        notBeforeEl.classList.remove('warning', 'valid', 'expired');
+        notAfterEl.classList.remove('warning', 'valid', 'expired');
         if (now < notBefore) {
           notBeforeEl.classList.add('warning');
           notBeforeEl.textContent += ' (not yet valid)';
+        } else {
+          notBeforeEl.classList.add('valid');
         }
         if (now > notAfter) {
           notAfterEl.classList.add('expired');
@@ -607,10 +883,59 @@
         document.getElementById('samlDestination').textContent = destination;
       }
 
-      // NotOnOrAfter from Conditions or SubjectConfirmationData
+      // NotBefore and NotOnOrAfter from Conditions
       const conditions = xmlDoc.querySelector('Conditions') || xmlDoc.querySelector('*|Conditions');
       const subjectConfData = xmlDoc.querySelector('SubjectConfirmationData') || xmlDoc.querySelector('*|SubjectConfirmationData');
       
+      // NotBefore
+      let notBefore = null;
+      if (conditions) {
+        notBefore = conditions.getAttribute('NotBefore');
+      }
+      const notBeforeEl = document.getElementById('notBefore');
+      notBeforeEl.classList.remove('warning', 'valid', 'expired');
+      if (notBefore) {
+        const notBeforeDate = new Date(notBefore);
+        
+        if (isNaN(notBeforeDate.getTime())) {
+          notBeforeEl.classList.add('warning');
+          notBeforeEl.textContent = 'Invalid date format';
+        } else {
+          const now = new Date();
+          notBeforeEl.textContent = formatUTC(notBeforeDate);
+          if (now < notBeforeDate) {
+            notBeforeEl.classList.add('warning');
+            notBeforeEl.textContent += ' (not yet valid)';
+          } else {
+            notBeforeEl.classList.add('valid');
+          }
+        }
+      } else {
+        notBeforeEl.textContent = '-';
+      }
+
+      // AuthnInstant
+      const authnStatement = xmlDoc.querySelector('AuthnStatement') || xmlDoc.querySelector('*|AuthnStatement');
+      const authnInstantEl = document.getElementById('authnInstant');
+      authnInstantEl.classList.remove('warning', 'valid', 'expired');
+      if (authnStatement) {
+        const authnInstant = authnStatement.getAttribute('AuthnInstant');
+        if (authnInstant) {
+          const authnDate = new Date(authnInstant);
+          if (isNaN(authnDate.getTime())) {
+            authnInstantEl.classList.add('warning');
+            authnInstantEl.textContent = 'Invalid date format';
+          } else {
+            authnInstantEl.textContent = formatUTC(authnDate);
+          }
+        } else {
+          authnInstantEl.textContent = '-';
+        }
+      } else {
+        authnInstantEl.textContent = '-';
+      }
+
+      // NotOnOrAfter
       let notOnOrAfter = null;
       if (conditions) {
         notOnOrAfter = conditions.getAttribute('NotOnOrAfter');
@@ -619,19 +944,27 @@
         notOnOrAfter = subjectConfData.getAttribute('NotOnOrAfter');
       }
       
+      const notOnOrAfterEl = document.getElementById('notOnOrAfter');
+      notOnOrAfterEl.classList.remove('warning', 'valid', 'expired');
       if (notOnOrAfter) {
-        const notOnOrAfterEl = document.getElementById('notOnOrAfter');
         const expiry = new Date(notOnOrAfter);
-        const now = new Date();
         
-        notOnOrAfterEl.textContent = expiry.toUTCString();
-        if (now > expiry) {
-          notOnOrAfterEl.classList.add('expired');
-          notOnOrAfterEl.textContent += ' (EXPIRED)';
+        if (isNaN(expiry.getTime())) {
+          notOnOrAfterEl.classList.add('warning');
+          notOnOrAfterEl.textContent = 'Invalid date format';
         } else {
-          notOnOrAfterEl.classList.add('valid');
-          notOnOrAfterEl.textContent += ' (valid)';
+          const now = new Date();
+          notOnOrAfterEl.textContent = formatUTC(expiry);
+          if (now > expiry) {
+            notOnOrAfterEl.classList.add('expired');
+            notOnOrAfterEl.textContent += ' (EXPIRED)';
+          } else {
+            notOnOrAfterEl.classList.add('valid');
+            notOnOrAfterEl.textContent += ' (valid)';
+          }
         }
+      } else {
+        notOnOrAfterEl.textContent = '-';
       }
 
       // Status
@@ -730,7 +1063,30 @@
       // Clear and hide certificate raw section
       document.getElementById('certRaw').textContent = '';
       document.getElementById('certDetails').style.display = 'none';
+      
+      // Clear and hide raw XML section
+      document.getElementById('xmlRaw').textContent = '';
+      document.getElementById('rawXmlSection').style.display = 'none';
+      
+      // Close all <details> elements within the results so they are collapsed next time
+      const detailsElements = document.querySelectorAll('#results details');
+      detailsElements.forEach(d => d.removeAttribute('open'));
+      
+      // Clear any pending copy timeout and reset copy button state
+      if (copyTimeoutId) {
+        clearTimeout(copyTimeoutId);
+        copyTimeoutId = null;
+      }
+      const copyBtn = document.querySelector('.copy-btn');
+      if (copyBtn) {
+        copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        copyBtn.classList.remove('copied');
+      }
+      document.getElementById('copyStatus').textContent = '';
     }
+
+    // Add event listener for copy button
+    document.getElementById('copyBtn').addEventListener('click', copyXml);
   </script>
 </body>
 </html>
