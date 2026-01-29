@@ -618,6 +618,15 @@
               });
               break;
             }
+            case Node.PROCESSING_INSTRUCTION_NODE: {
+              const target = node.target || '';
+              const data = node.nodeValue || '';
+              if (target) {
+                const content = data ? ' ' + data : '';
+                output += indent + '<?' + target + content + '?>\n';
+              }
+              break;
+            }
             default:
               break;
           }
