@@ -479,6 +479,10 @@
       errorDiv.style.display = 'block';
     }
 
+    function formatUTC(date) {
+      return date.toUTCString().replace('GMT', 'UTC');
+    }
+
     function displayRawCertificate(base64Cert) {
       // Format as PEM
       const pemLines = ['-----BEGIN CERTIFICATE-----'];
@@ -571,8 +575,8 @@
         const notBeforeEl = document.getElementById('certNotBefore');
         const notAfterEl = document.getElementById('certNotAfter');
         
-        notBeforeEl.textContent = notBefore.toUTCString();
-        notAfterEl.textContent = notAfter.toUTCString();
+        notBeforeEl.textContent = formatUTC(notBefore);
+        notAfterEl.textContent = formatUTC(notAfter);
         
         // Check validity
         const now = new Date();
@@ -733,7 +737,7 @@
         const notBeforeDate = new Date(notBefore);
         const now = new Date();
         
-        notBeforeEl.textContent = notBeforeDate.toUTCString();
+        notBeforeEl.textContent = formatUTC(notBeforeDate);
         if (now < notBeforeDate) {
           notBeforeEl.classList.add('warning');
           notBeforeEl.textContent += ' (not yet valid)';
@@ -749,7 +753,7 @@
         if (authnInstant) {
           const authnInstantEl = document.getElementById('authnInstant');
           const authnDate = new Date(authnInstant);
-          authnInstantEl.textContent = authnDate.toUTCString();
+          authnInstantEl.textContent = formatUTC(authnDate);
         }
       }
 
@@ -767,7 +771,7 @@
         const expiry = new Date(notOnOrAfter);
         const now = new Date();
         
-        notOnOrAfterEl.textContent = expiry.toUTCString();
+        notOnOrAfterEl.textContent = formatUTC(expiry);
         if (now > expiry) {
           notOnOrAfterEl.classList.add('expired');
           notOnOrAfterEl.textContent += ' (EXPIRED)';
