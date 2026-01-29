@@ -99,6 +99,10 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 4px;
+      cursor: help;
+    }
+    .field-label[title]:hover {
+      color: #0969da;
     }
     .field-value {
       font-family: monospace;
@@ -363,19 +367,27 @@
           <div class="field-value" id="nameIdValue">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Issuer</div>
+          <div class="field-label" title="The SAML Identity Provider that issued this assertion">Issuer</div>
           <div class="field-value" id="samlIssuer">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Destination</div>
+          <div class="field-label" title="The URL where this SAML response should be delivered">Destination</div>
           <div class="field-value" id="samlDestination">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Not On Or After</div>
+          <div class="field-label" title="The earliest time this assertion is valid — prevents replay of future-dated tokens">Not Before</div>
+          <div class="field-value" id="notBefore">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label" title="The exact moment the user authenticated with the IdP (entered password, etc.)">Auth Instant</div>
+          <div class="field-value" id="authnInstant">-</div>
+        </div>
+        <div class="field">
+          <div class="field-label" title="The expiry time — assertion is invalid after this time">Not On Or After</div>
           <div class="field-value" id="notOnOrAfter">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Status</div>
+          <div class="field-label" title="Whether the SAML authentication was successful">Status</div>
           <div class="field-value" id="samlStatus">-</div>
         </div>
       </div>
@@ -707,10 +719,41 @@
         document.getElementById('samlDestination').textContent = destination;
       }
 
-      // NotOnOrAfter from Conditions or SubjectConfirmationData
+      // NotBefore and NotOnOrAfter from Conditions
       const conditions = xmlDoc.querySelector('Conditions') || xmlDoc.querySelector('*|Conditions');
       const subjectConfData = xmlDoc.querySelector('SubjectConfirmationData') || xmlDoc.querySelector('*|SubjectConfirmationData');
       
+      // NotBefore
+      let notBefore = null;
+      if (conditions) {
+        notBefore = conditions.getAttribute('NotBefore');
+      }
+      if (notBefore) {
+        const notBeforeEl = document.getElementById('notBefore');
+        const notBeforeDate = new Date(notBefore);
+        const now = new Date();
+        
+        notBeforeEl.textContent = notBeforeDate.toUTCString();
+        if (now < notBeforeDate) {
+          notBeforeEl.classList.add('warning');
+          notBeforeEl.textContent += ' (not yet valid)';
+        } else {
+          notBeforeEl.classList.add('valid');
+        }
+      }
+
+      // AuthnInstant
+      const authnStatement = xmlDoc.querySelector('AuthnStatement') || xmlDoc.querySelector('*|AuthnStatement');
+      if (authnStatement) {
+        const authnInstant = authnStatement.getAttribute('AuthnInstant');
+        if (authnInstant) {
+          const authnInstantEl = document.getElementById('authnInstant');
+          const authnDate = new Date(authnInstant);
+          authnInstantEl.textContent = authnDate.toUTCString();
+        }
+      }
+
+      // NotOnOrAfter
       let notOnOrAfter = null;
       if (conditions) {
         notOnOrAfter = conditions.getAttribute('NotOnOrAfter');
