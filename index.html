@@ -547,7 +547,12 @@
               let tagOpen = '<' + node.nodeName;
               for (let i = 0; i < node.attributes.length; i++) {
                 const attr = node.attributes[i];
-                tagOpen += ' ' + attr.name + '="' + attr.value + '"';
+                const escapedValue = attr.value
+                  .replace(/&/g, '&amp;')
+                  .replace(/"/g, '&quot;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;');
+                tagOpen += ' ' + attr.name + '="' + escapedValue + '"';
               }
 
               const children = Array.prototype.slice.call(node.childNodes || []);
@@ -843,14 +848,19 @@
       if (notBefore) {
         const notBeforeEl = document.getElementById('notBefore');
         const notBeforeDate = new Date(notBefore);
-        const now = new Date();
         
-        notBeforeEl.textContent = formatUTC(notBeforeDate);
-        if (now < notBeforeDate) {
+        if (isNaN(notBeforeDate.getTime())) {
           notBeforeEl.classList.add('warning');
-          notBeforeEl.textContent += ' (not yet valid)';
+          notBeforeEl.textContent = 'Invalid date format';
         } else {
-          notBeforeEl.classList.add('valid');
+          const now = new Date();
+          notBeforeEl.textContent = formatUTC(notBeforeDate);
+          if (now < notBeforeDate) {
+            notBeforeEl.classList.add('warning');
+            notBeforeEl.textContent += ' (not yet valid)';
+          } else {
+            notBeforeEl.classList.add('valid');
+          }
         }
       }
 
