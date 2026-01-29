@@ -100,6 +100,7 @@
       letter-spacing: 0.5px;
       margin-bottom: 4px;
       cursor: help;
+      transition: color 0.2s ease;
     }
     .field-label[title]:hover {
       color: #0969da;
@@ -318,7 +319,7 @@
         <details class="xml-details">
           <summary>View decoded SAML Response XML</summary>
           <div class="xml-container">
-            <button class="copy-btn" onclick="copyXml()"><i class="fa-regular fa-copy"></i> Copy</button>
+            <button class="copy-btn" onclick="copyXml()" aria-live="polite"><i class="fa-regular fa-copy"></i> Copy</button>
             <pre class="xml-raw" id="xmlRaw"></pre>
           </div>
         </details>
@@ -375,7 +376,7 @@
           <div class="field-value" id="samlDestination">-</div>
         </div>
         <div class="field">
-          <div class="field-label" title="The earliest time this assertion is valid — prevents replay of future-dated tokens">Not Before</div>
+          <div class="field-label" title="The earliest time this assertion becomes valid — prevents use of the assertion before this time">Not Before</div>
           <div class="field-value" id="notBefore">-</div>
         </div>
         <div class="field">
@@ -480,6 +481,9 @@
     }
 
     function formatUTC(date) {
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
       return date.toUTCString().replace('GMT', 'UTC');
     }
 
@@ -500,10 +504,16 @@
       const formatted = formatXml(xmlString);
       document.getElementById('xmlRaw').textContent = formatted;
       document.getElementById('rawXmlSection').style.display = 'block';
+      // Reset details state to closed on new decode
+      document.querySelector('#rawXmlSection .xml-details').removeAttribute('open');
     }
 
     function formatXml(xml) {
-      let formatted = '';
+      if (!xml || xml.length < 3) {
+        return xml || '';
+      }
+      
+      const lines = [];
       let indent = '';
       const tab = '  ';
       
@@ -511,13 +521,17 @@
         if (node.match(/^\/\w/)) {
           indent = indent.substring(tab.length);
         }
-        formatted += indent + '<' + node + '>\n';
+        lines.push(indent + '<' + node + '>');
         if (node.match(/^<?\w[^>]*[^\/]$/) && !node.startsWith('?') && !node.startsWith('!')) {
           indent += tab;
         }
       });
       
-      return formatted.substring(1, formatted.length - 2);
+      const result = lines.join('\n');
+      if (result.length < 3) {
+        return result;
+      }
+      return result.substring(1, result.length - 1);
     }
 
     function copyXml() {
@@ -529,6 +543,13 @@
         setTimeout(function() {
           btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
           btn.classList.remove('copied');
+        }, 2000);
+      }).catch(function(error) {
+        console.error('Failed to copy XML to clipboard:', error);
+        const btn = document.querySelector('.copy-btn');
+        btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
+        setTimeout(function() {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
         }, 2000);
       });
     }
