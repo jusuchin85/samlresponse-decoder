@@ -330,7 +330,7 @@
         <details class="xml-details">
           <summary>View decoded SAML Response XML</summary>
           <div class="xml-container">
-            <button class="copy-btn" onclick="copyXml()"><i class="fa-regular fa-copy"></i> Copy</button>
+            <button class="copy-btn" onclick="copyXml()" aria-label="Copy XML to clipboard"><i class="fa-regular fa-copy"></i> Copy</button>
             <span id="copyStatus" class="visually-hidden" aria-live="polite"></span>
             <pre class="xml-raw" id="xmlRaw"></pre>
           </div>
@@ -396,7 +396,7 @@
           <div class="field-value" id="authnInstant">-</div>
         </div>
         <div class="field">
-          <div class="field-label" title="The expiry time — assertion is invalid after this time">Not On Or After</div>
+          <div class="field-label" title="The expiry time — assertion cannot be used on or after this time">Not On Or After</div>
           <div class="field-value" id="notOnOrAfter">-</div>
         </div>
         <div class="field">
@@ -587,7 +587,11 @@
             case Node.TEXT_NODE: {
               const text = node.nodeValue;
               if (text && text.trim() !== '') {
-                output += text.trim();
+                const escapedText = text.trim()
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;');
+                output += escapedText;
               }
               break;
             }
@@ -623,8 +627,20 @@
     function copyXml() {
       const xmlContent = document.getElementById('xmlRaw').textContent;
       const statusEl = document.getElementById('copyStatus');
+      const btn = document.querySelector('.copy-btn');
+
+      // Check if Clipboard API is available
+      if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Not supported';
+        statusEl.textContent = 'Clipboard API not available. Please copy manually.';
+        setTimeout(function() {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+          statusEl.textContent = '';
+        }, 3000);
+        return;
+      }
+
       navigator.clipboard.writeText(xmlContent).then(function() {
-        const btn = document.querySelector('.copy-btn');
         btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
         btn.classList.add('copied');
         statusEl.textContent = 'XML copied to clipboard';
@@ -635,7 +651,6 @@
         }, 2000);
       }).catch(function(error) {
         console.error('Failed to copy XML to clipboard:', error);
-        const btn = document.querySelector('.copy-btn');
         btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
         btn.classList.remove('copied');
         statusEl.textContent = 'Failed to copy XML to clipboard';
