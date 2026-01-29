@@ -329,23 +329,23 @@
       <div class="section-header">📜 X.509 Certificate</div>
       <div class="section-body">
         <div class="field">
-          <div class="field-label">Issuer</div>
+          <div class="field-label" title="The Certificate Authority (CA) or entity that issued this certificate">Issuer</div>
           <div class="field-value" id="certIssuer">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Subject</div>
+          <div class="field-label" title="The entity this certificate was issued to (usually the IdP)">Subject</div>
           <div class="field-value" id="certSubject">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Valid From</div>
+          <div class="field-label" title="The date/time when this certificate became valid">Valid From</div>
           <div class="field-value" id="certNotBefore">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Valid Until</div>
+          <div class="field-label" title="The date/time when this certificate expires — needs renewal before this date">Valid Until</div>
           <div class="field-value" id="certNotAfter">-</div>
         </div>
         <div class="field">
-          <div class="field-label">Signature Algorithm</div>
+          <div class="field-label" title="The cryptographic algorithm used to sign this certificate">Signature Algorithm</div>
           <div class="field-value" id="certSigAlg">-</div>
         </div>
         <details class="cert-details" id="certDetails" style="display: none;">
@@ -359,11 +359,11 @@
       <div class="section-header">🎫 SAML Assertion</div>
       <div class="section-body">
         <div class="field">
-          <div class="field-label">NameID Format</div>
+          <div class="field-label" title="The format/type of the user identifier (e.g., email, persistent, transient)">NameID Format</div>
           <div class="field-value" id="nameIdFormat">-</div>
         </div>
         <div class="field">
-          <div class="field-label">NameID Value</div>
+          <div class="field-label" title="The unique identifier for the authenticated user">NameID Value</div>
           <div class="field-value" id="nameIdValue">-</div>
         </div>
         <div class="field">
