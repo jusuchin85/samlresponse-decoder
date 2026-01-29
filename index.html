@@ -388,7 +388,7 @@
           <div class="field-value" id="samlDestination">-</div>
         </div>
         <div class="field">
-          <div class="field-label" title="The earliest time this assertion becomes valid — prevents use of the assertion before this time">Not Before</div>
+          <div class="field-label" title="The time at which this assertion becomes valid — assertion cannot be used before this time">Not Before</div>
           <div class="field-value" id="notBefore">-</div>
         </div>
         <div class="field">
@@ -524,26 +524,95 @@
       if (!xml || xml.length < 3) {
         return xml || '';
       }
-      
-      const lines = [];
-      let indent = '';
-      const tab = '  ';
-      
-      xml.split(/>\s*</).forEach(function(node) {
-        if (node.match(/^\/\w/)) {
-          indent = indent.substring(tab.length);
+
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xml, 'application/xml');
+
+        // If the XML is not well-formed, DOMParser will create a parsererror element
+        const parseError = doc.getElementsByTagName('parsererror')[0];
+        if (parseError) {
+          // Fall back to the original string if parsing fails
+          return xml;
         }
-        lines.push(indent + '<' + node + '>');
-        if (node.match(/^<?\w[^>]*$/) && !node.endsWith('/') && !node.startsWith('?') && !node.startsWith('!')) {
-          indent += tab;
+
+        const indentUnit = '  ';
+
+        function serializeNode(node, depth) {
+          const indent = indentUnit.repeat(depth);
+          let output = '';
+
+          switch (node.nodeType) {
+            case Node.ELEMENT_NODE: {
+              let tagOpen = '<' + node.nodeName;
+              for (let i = 0; i < node.attributes.length; i++) {
+                const attr = node.attributes[i];
+                tagOpen += ' ' + attr.name + '="' + attr.value + '"';
+              }
+
+              const children = Array.prototype.slice.call(node.childNodes || []);
+              if (children.length === 0) {
+                // Self-closing tag for empty elements
+                output += indent + tagOpen + '/>\n';
+              } else {
+                // Determine if there is any element child (for newline placement)
+                const hasElementChild = children.some(function(child) {
+                  return child.nodeType === Node.ELEMENT_NODE;
+                });
+
+                output += indent + tagOpen + '>';
+                if (hasElementChild) {
+                  output += '\n';
+                }
+
+                children.forEach(function(child) {
+                  const childText = serializeNode(child, depth + 1);
+                  if (childText) {
+                    output += childText;
+                  }
+                });
+
+                if (hasElementChild) {
+                  output += indent;
+                }
+                output += '</' + node.nodeName + '>\n';
+              }
+              break;
+            }
+            case Node.TEXT_NODE: {
+              const text = node.nodeValue;
+              if (text && text.trim() !== '') {
+                output += text.trim();
+              }
+              break;
+            }
+            case Node.CDATA_SECTION_NODE: {
+              output += indent + '<![CDATA[' + node.nodeValue + ']]>\n';
+              break;
+            }
+            case Node.COMMENT_NODE: {
+              output += indent + '<!--' + node.nodeValue + '-->\n';
+              break;
+            }
+            case Node.DOCUMENT_NODE:
+            case Node.DOCUMENT_FRAGMENT_NODE: {
+              Array.prototype.forEach.call(node.childNodes, function(child) {
+                output += serializeNode(child, depth);
+              });
+              break;
+            }
+            default:
+              break;
+          }
+
+          return output;
         }
-      });
-      
-      const result = lines.join('\n');
-      if (result.length < 3) {
-        return result;
+
+        return serializeNode(doc, 0).trim();
+      } catch (e) {
+        // In case of any unexpected error, return the original XML
+        return xml;
       }
-      return result.substring(1, result.length - 1);
     }
 
     function copyXml() {
@@ -792,7 +861,12 @@
         if (authnInstant) {
           const authnInstantEl = document.getElementById('authnInstant');
           const authnDate = new Date(authnInstant);
-          authnInstantEl.textContent = formatUTC(authnDate);
+          if (isNaN(authnDate.getTime())) {
+            authnInstantEl.classList.add('warning');
+            authnInstantEl.textContent = 'Invalid date format';
+          } else {
+            authnInstantEl.textContent = formatUTC(authnDate);
+          }
         }
       }
 
