@@ -741,6 +741,8 @@
         if (now < notBefore) {
           notBeforeEl.classList.add('warning');
           notBeforeEl.textContent += ' (not yet valid)';
+        } else {
+          notBeforeEl.classList.add('valid');
         }
         if (now > notAfter) {
           notAfterEl.classList.add('expired');
