@@ -907,15 +907,20 @@
       if (notOnOrAfter) {
         const notOnOrAfterEl = document.getElementById('notOnOrAfter');
         const expiry = new Date(notOnOrAfter);
-        const now = new Date();
         
-        notOnOrAfterEl.textContent = formatUTC(expiry);
-        if (now > expiry) {
-          notOnOrAfterEl.classList.add('expired');
-          notOnOrAfterEl.textContent += ' (EXPIRED)';
+        if (isNaN(expiry.getTime())) {
+          notOnOrAfterEl.classList.add('warning');
+          notOnOrAfterEl.textContent = 'Invalid date format';
         } else {
-          notOnOrAfterEl.classList.add('valid');
-          notOnOrAfterEl.textContent += ' (valid)';
+          const now = new Date();
+          notOnOrAfterEl.textContent = formatUTC(expiry);
+          if (now > expiry) {
+            notOnOrAfterEl.classList.add('expired');
+            notOnOrAfterEl.textContent += ' (EXPIRED)';
+          } else {
+            notOnOrAfterEl.classList.add('valid');
+            notOnOrAfterEl.textContent += ' (valid)';
+          }
         }
       }
 
