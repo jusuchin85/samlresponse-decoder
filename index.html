@@ -1041,8 +1041,8 @@
       document.getElementById('xmlRaw').textContent = '';
       document.getElementById('rawXmlSection').style.display = 'none';
       
-      // Close all <details> elements so they are collapsed next time
-      const detailsElements = document.querySelectorAll('details');
+      // Close all <details> elements within the results so they are collapsed next time
+      const detailsElements = document.querySelectorAll('#results details');
       detailsElements.forEach(d => d.removeAttribute('open'));
     }
   </script>
