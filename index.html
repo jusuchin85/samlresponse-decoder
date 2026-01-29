@@ -522,7 +522,7 @@
           indent = indent.substring(tab.length);
         }
         lines.push(indent + '<' + node + '>');
-        if (node.match(/^<?\w[^>]*[^\/]$/) && !node.startsWith('?') && !node.startsWith('!')) {
+        if (node.match(/^<?\w[^>]*$/) && !node.endsWith('/') && !node.startsWith('?') && !node.startsWith('!')) {
           indent += tab;
         }
       });
@@ -548,6 +548,7 @@
         console.error('Failed to copy XML to clipboard:', error);
         const btn = document.querySelector('.copy-btn');
         btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
+        btn.classList.remove('copied');
         setTimeout(function() {
           btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
         }, 2000);
@@ -902,6 +903,10 @@
       // Clear and hide raw XML section
       document.getElementById('xmlRaw').textContent = '';
       document.getElementById('rawXmlSection').style.display = 'none';
+      
+      // Close all <details> elements so they are collapsed next time
+      const detailsElements = document.querySelectorAll('details');
+      detailsElements.forEach(d => d.removeAttribute('open'));
     }
   </script>
 </body>
