@@ -624,18 +624,27 @@
       }
     }
 
+    var copyTimeoutId = null;
+    
     function copyXml() {
       const xmlContent = document.getElementById('xmlRaw').textContent;
       const statusEl = document.getElementById('copyStatus');
       const btn = document.querySelector('.copy-btn');
 
+      // Clear any pending timeout
+      if (copyTimeoutId) {
+        clearTimeout(copyTimeoutId);
+        copyTimeoutId = null;
+      }
+
       // Check if Clipboard API is available
       if (!navigator.clipboard || !navigator.clipboard.writeText) {
         btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Not supported';
         statusEl.textContent = 'Clipboard API not available. Please copy manually.';
-        setTimeout(function() {
+        copyTimeoutId = setTimeout(function() {
           btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
           statusEl.textContent = '';
+          copyTimeoutId = null;
         }, 3000);
         return;
       }
@@ -644,19 +653,21 @@
         btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
         btn.classList.add('copied');
         statusEl.textContent = 'XML copied to clipboard';
-        setTimeout(function() {
+        copyTimeoutId = setTimeout(function() {
           btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
           btn.classList.remove('copied');
           statusEl.textContent = '';
+          copyTimeoutId = null;
         }, 2000);
       }).catch(function(error) {
         console.error('Failed to copy XML to clipboard:', error);
         btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
         btn.classList.remove('copied');
         statusEl.textContent = 'Failed to copy XML to clipboard';
-        setTimeout(function() {
+        copyTimeoutId = setTimeout(function() {
           btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
           statusEl.textContent = '';
+          copyTimeoutId = null;
         }, 2000);
       });
     }
@@ -708,6 +719,8 @@
         
         // Check validity
         const now = new Date();
+        notBeforeEl.classList.remove('warning', 'valid', 'expired');
+        notAfterEl.classList.remove('warning', 'valid', 'expired');
         if (now < notBefore) {
           notBeforeEl.classList.add('warning');
           notBeforeEl.textContent += ' (not yet valid)';
@@ -864,6 +877,7 @@
         const notBeforeEl = document.getElementById('notBefore');
         const notBeforeDate = new Date(notBefore);
         
+        notBeforeEl.classList.remove('warning', 'valid', 'expired');
         if (isNaN(notBeforeDate.getTime())) {
           notBeforeEl.classList.add('warning');
           notBeforeEl.textContent = 'Invalid date format';
@@ -886,6 +900,7 @@
         if (authnInstant) {
           const authnInstantEl = document.getElementById('authnInstant');
           const authnDate = new Date(authnInstant);
+          authnInstantEl.classList.remove('warning', 'valid', 'expired');
           if (isNaN(authnDate.getTime())) {
             authnInstantEl.classList.add('warning');
             authnInstantEl.textContent = 'Invalid date format';
@@ -908,6 +923,7 @@
         const notOnOrAfterEl = document.getElementById('notOnOrAfter');
         const expiry = new Date(notOnOrAfter);
         
+        notOnOrAfterEl.classList.remove('warning', 'valid', 'expired');
         if (isNaN(expiry.getTime())) {
           notOnOrAfterEl.classList.add('warning');
           notOnOrAfterEl.textContent = 'Invalid date format';
