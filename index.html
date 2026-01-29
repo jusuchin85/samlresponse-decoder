@@ -330,7 +330,7 @@
         <details class="xml-details">
           <summary>View decoded SAML Response XML</summary>
           <div class="xml-container">
-            <button class="copy-btn" onclick="copyXml()" aria-label="Copy XML to clipboard"><i class="fa-regular fa-copy"></i> Copy</button>
+            <button class="copy-btn" id="copyBtn" aria-label="Copy XML to clipboard"><i class="fa-regular fa-copy"></i> Copy</button>
             <span id="copyStatus" class="visually-hidden" aria-live="polite"></span>
             <pre class="xml-raw" id="xmlRaw"></pre>
           </div>
@@ -890,11 +890,11 @@
       if (conditions) {
         notBefore = conditions.getAttribute('NotBefore');
       }
+      const notBeforeEl = document.getElementById('notBefore');
+      notBeforeEl.classList.remove('warning', 'valid', 'expired');
       if (notBefore) {
-        const notBeforeEl = document.getElementById('notBefore');
         const notBeforeDate = new Date(notBefore);
         
-        notBeforeEl.classList.remove('warning', 'valid', 'expired');
         if (isNaN(notBeforeDate.getTime())) {
           notBeforeEl.classList.add('warning');
           notBeforeEl.textContent = 'Invalid date format';
@@ -908,23 +908,29 @@
             notBeforeEl.classList.add('valid');
           }
         }
+      } else {
+        notBeforeEl.textContent = '-';
       }
 
       // AuthnInstant
       const authnStatement = xmlDoc.querySelector('AuthnStatement') || xmlDoc.querySelector('*|AuthnStatement');
+      const authnInstantEl = document.getElementById('authnInstant');
+      authnInstantEl.classList.remove('warning', 'valid', 'expired');
       if (authnStatement) {
         const authnInstant = authnStatement.getAttribute('AuthnInstant');
         if (authnInstant) {
-          const authnInstantEl = document.getElementById('authnInstant');
           const authnDate = new Date(authnInstant);
-          authnInstantEl.classList.remove('warning', 'valid', 'expired');
           if (isNaN(authnDate.getTime())) {
             authnInstantEl.classList.add('warning');
             authnInstantEl.textContent = 'Invalid date format';
           } else {
             authnInstantEl.textContent = formatUTC(authnDate);
           }
+        } else {
+          authnInstantEl.textContent = '-';
         }
+      } else {
+        authnInstantEl.textContent = '-';
       }
 
       // NotOnOrAfter
@@ -936,11 +942,11 @@
         notOnOrAfter = subjectConfData.getAttribute('NotOnOrAfter');
       }
       
+      const notOnOrAfterEl = document.getElementById('notOnOrAfter');
+      notOnOrAfterEl.classList.remove('warning', 'valid', 'expired');
       if (notOnOrAfter) {
-        const notOnOrAfterEl = document.getElementById('notOnOrAfter');
         const expiry = new Date(notOnOrAfter);
         
-        notOnOrAfterEl.classList.remove('warning', 'valid', 'expired');
         if (isNaN(expiry.getTime())) {
           notOnOrAfterEl.classList.add('warning');
           notOnOrAfterEl.textContent = 'Invalid date format';
@@ -955,6 +961,8 @@
             notOnOrAfterEl.textContent += ' (valid)';
           }
         }
+      } else {
+        notOnOrAfterEl.textContent = '-';
       }
 
       // Status
@@ -1074,6 +1082,9 @@
       }
       document.getElementById('copyStatus').textContent = '';
     }
+
+    // Add event listener for copy button
+    document.getElementById('copyBtn').addEventListener('click', copyXml);
   </script>
 </body>
 </html>
