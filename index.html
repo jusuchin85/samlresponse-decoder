@@ -214,6 +214,52 @@
       white-space: pre-wrap;
       word-break: break-all;
     }
+    .xml-details {
+      margin-top: 0;
+    }
+    .xml-details summary {
+      cursor: pointer;
+      font-size: 13px;
+      color: #0969da;
+      user-select: none;
+    }
+    .xml-details summary:hover {
+      text-decoration: underline;
+    }
+    .xml-container {
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #24292f;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .copy-btn:hover {
+      background: #32383f;
+    }
+    .copy-btn.copied {
+      background: #2da44e;
+    }
+    .xml-raw {
+      margin-top: 8px;
+      padding: 12px;
+      background: #f6f8fa;
+      border-radius: 6px;
+      font-size: 11px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 400px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
@@ -262,6 +308,19 @@
   <div id="error" class="error" style="display: none;"></div>
 
   <div id="results" class="results">
+    <div class="section" id="rawXmlSection" style="display: none;">
+      <div class="section-header">📄 Raw XML</div>
+      <div class="section-body">
+        <details class="xml-details">
+          <summary>View decoded SAML Response XML</summary>
+          <div class="xml-container">
+            <button class="copy-btn" onclick="copyXml()"><i class="fa-regular fa-copy"></i> Copy</button>
+            <pre class="xml-raw" id="xmlRaw"></pre>
+          </div>
+        </details>
+      </div>
+    </div>
+
     <div class="section">
       <div class="section-header">📜 X.509 Certificate</div>
       <div class="section-body">
@@ -393,6 +452,9 @@
         // Extract SAML info
         extractSamlInfo(xmlDoc);
 
+        // Display raw XML
+        displayRawXml(xmlString);
+
         resultsDiv.classList.add('show');
       } catch (e) {
         showError('Failed to decode: ' + e.message);
@@ -415,6 +477,44 @@
       
       document.getElementById('certRaw').textContent = pemLines.join('\n');
       document.getElementById('certDetails').style.display = 'block';
+    }
+
+    function displayRawXml(xmlString) {
+      // Pretty print XML
+      const formatted = formatXml(xmlString);
+      document.getElementById('xmlRaw').textContent = formatted;
+      document.getElementById('rawXmlSection').style.display = 'block';
+    }
+
+    function formatXml(xml) {
+      let formatted = '';
+      let indent = '';
+      const tab = '  ';
+      
+      xml.split(/>\s*</).forEach(function(node) {
+        if (node.match(/^\/\w/)) {
+          indent = indent.substring(tab.length);
+        }
+        formatted += indent + '<' + node + '>\n';
+        if (node.match(/^<?\w[^>]*[^\/]$/) && !node.startsWith('?') && !node.startsWith('!')) {
+          indent += tab;
+        }
+      });
+      
+      return formatted.substring(1, formatted.length - 2);
+    }
+
+    function copyXml() {
+      const xmlContent = document.getElementById('xmlRaw').textContent;
+      navigator.clipboard.writeText(xmlContent).then(function() {
+        const btn = document.querySelector('.copy-btn');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
     }
 
     function parseCertificate(base64Cert) {
@@ -730,6 +830,10 @@
       // Clear and hide certificate raw section
       document.getElementById('certRaw').textContent = '';
       document.getElementById('certDetails').style.display = 'none';
+      
+      // Clear and hide raw XML section
+      document.getElementById('xmlRaw').textContent = '';
+      document.getElementById('rawXmlSection').style.display = 'none';
     }
   </script>
 </body>
