@@ -10,10 +10,10 @@ A simple, client-side tool to decode and inspect SAML responses. All processing 
 
 - Decode base64-encoded SAML responses
 - View raw decoded XML with one-click copy
-- Extract X.509 certificate details (Issuer, Subject, Validity, Signature Algorithm)
+- Extract X.509 certificate details (`Issuer`, `Subject`, `Validity`, `Signature Algorithm`)
 - View raw certificate in PEM format
-- Display SAML assertion info (NameID, Issuer, Destination, NotBefore, AuthnInstant, NotOnOrAfter, Session Expires, Status)
-- Show SAML attributes (displayname, email, etc.)
+- Display SAML assertion info (`NameID`, `Issuer`, `Destination`, `NotBefore`, `AuthnInstant`, `NotOnOrAfter`, `Session Expires`, `Status`)
+- Show SAML attributes (`displayname`, `email`, etc.)
 - Visual indicators for expired/valid timestamps
 - Contextual help modals with field documentation
 - Helpful tooltips on hover for all fields
@@ -34,25 +34,26 @@ To capture a SAML response from your browser for troubleshooting:
 ### Chrome / Edge
 
 1. Open Developer Tools (`F12` or `Cmd+Option+I` on Mac)
-2. Go to the **Network** tab
-3. Check **Preserve log**
-4. Initiate the SAML login flow (e.g., sign in to the app)
-5. In the Network tab, look for a POST request to a URL containing `/saml/consume` or `/acs`
-6. Click on the request, go to the **Payload** tab
-7. Find the `SAMLResponse` parameter and copy its value
+1. Go to the **Network** tab
+1. Check **Preserve log**
+1. Initiate the SAML login flow (e.g., sign in to the app)
+1. In the Network tab, look for a POST request to a URL containing `/saml/consume` or `/acs`
+1. Click on the request, go to the **Payload** tab
+1. Find the `SAMLResponse` parameter and copy its value
 
 ### Firefox
 
 1. Open Developer Tools (`F12` or `Cmd+Option+I` on Mac)
-2. Go to the **Network** tab and check **Persist Logs**
-3. Initiate the SAML login flow
-4. Look for the POST request to the ACS (Assertion Consumer Service) URL
-5. Click on the request, go to the **Request** tab
-6. Find and copy the `SAMLResponse` value
+1. Go to the **Network** tab and check **Persist Logs**
+1. Initiate the SAML login flow
+1. Look for the POST request to the ACS (Assertion Consumer Service) URL
+1. Click on the request, go to the **Request** tab
+1. Find and copy the `SAMLResponse` value
 
 ### Using Browser Extensions
 
 You can also use extensions like:
+
 - [SAML-tracer](https://addons.mozilla.org/en-US/firefox/addon/saml-tracer/) (Firefox)
 - [SAML Chrome Panel](https://chrome.google.com/webstore/detail/saml-chrome-panel/paijfdbeoenhembfhkhllainmocckace) (Chrome)
 
