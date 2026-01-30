@@ -12,10 +12,13 @@ A simple, client-side tool to decode and inspect SAML responses. All processing 
 - View raw decoded XML with one-click copy
 - Extract X.509 certificate details (Issuer, Subject, Validity, Signature Algorithm)
 - View raw certificate in PEM format
-- Display SAML assertion info (NameID, Issuer, Destination, NotBefore, AuthnInstant, NotOnOrAfter, Status)
+- Display SAML assertion info (NameID, Issuer, Destination, NotBefore, AuthnInstant, NotOnOrAfter, Session Expires, Status)
 - Show SAML attributes (displayname, email, etc.)
 - Visual indicators for expired/valid timestamps
+- Contextual help modals with field documentation
 - Helpful tooltips on hover for all fields
+- Fully accessible: keyboard navigation, focus trap, ARIA support
+- Mobile responsive design
 - 100% client-side — your data never leaves your browser
 
 ## 📖 Usage
