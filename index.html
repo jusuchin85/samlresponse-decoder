@@ -6,6 +6,38 @@
   <title>SAML Response Decoder</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
+    :root {
+      /* Colours - Neutral */
+      --color-bg-primary: #f6f8fa;
+      --color-bg-secondary: white;
+      --color-bg-tertiary: #f6f8fa;
+      --color-text-primary: #24292f;
+      --color-text-secondary: #57606a;
+      --color-border: #d0d7de;
+      
+      /* Colours - Interactive */
+      --color-accent: #0969da;
+      --color-accent-hover: #0550ae;
+      --color-btn-primary: #2da44e;
+      --color-btn-primary-hover: #2c974b;
+      --color-btn-secondary: #6e7781;
+      --color-btn-secondary-hover: #57606a;
+      --color-btn-dark: #24292f;
+      --color-btn-dark-hover: #32383f;
+      
+      /* Colours - Status */
+      --color-valid-bg: #dafbe1;
+      --color-valid-text: #1a7f37;
+      --color-error-bg: #ffebe9;
+      --color-error-text: #cf222e;
+      --color-error-border: #ff8182;
+      --color-warning-bg: #fff8c5;
+      --color-warning-text: #9a6700;
+      --color-info-bg: #ddf4ff;
+      --color-info-border: #54aeff;
+      --color-info-text: #0969da;
+      --color-accent-shadow: rgba(9, 105, 218, 0.15);
+    }
     * {
       box-sizing: border-box;
     }
@@ -14,12 +46,12 @@
       max-width: 1000px;
       margin: 0 auto;
       padding: 20px;
-      background: #f6f8fa;
-      color: #24292f;
+      background: var(--color-bg-primary);
+      color: var(--color-text-primary);
     }
     h1 {
-      color: #24292f;
-      border-bottom: 1px solid #d0d7de;
+      color: var(--color-text-primary);
+      border-bottom: 1px solid var(--color-border);
       padding-bottom: 10px;
     }
     .input-section {
@@ -34,7 +66,7 @@
       width: 100%;
       height: 150px;
       padding: 12px;
-      border: 1px solid #d0d7de;
+      border: 1px solid var(--color-border);
       border-radius: 6px;
       font-family: monospace;
       font-size: 13px;
@@ -42,11 +74,11 @@
     }
     textarea:focus {
       outline: none;
-      border-color: #0969da;
-      box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.15);
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px var(--color-accent-shadow);
     }
     button {
-      background: #2da44e;
+      background: var(--color-btn-primary);
       color: white;
       border: none;
       padding: 10px 20px;
@@ -57,13 +89,13 @@
       margin-right: 10px;
     }
     button:hover {
-      background: #2c974b;
+      background: var(--color-btn-primary-hover);
     }
     button.secondary {
-      background: #6e7781;
+      background: var(--color-btn-secondary);
     }
     button.secondary:hover {
-      background: #57606a;
+      background: var(--color-btn-secondary-hover);
     }
     .results {
       display: none;
@@ -72,17 +104,22 @@
       display: block;
     }
     .section {
-      background: white;
-      border: 1px solid #d0d7de;
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
       border-radius: 6px;
       margin-bottom: 16px;
       overflow: hidden;
     }
     .section-header {
-      background: #f6f8fa;
+      background: var(--color-bg-primary);
       padding: 12px 16px;
       font-weight: 600;
-      border-bottom: 1px solid #d0d7de;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     .section-body {
       padding: 16px;
@@ -95,7 +132,7 @@
     }
     .field-label {
       font-size: 12px;
-      color: #57606a;
+      color: var(--color-text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 4px;
@@ -103,48 +140,49 @@
       transition: color 0.2s ease;
     }
     .field-label[title]:hover {
-      color: #0969da;
+      color: var(--color-accent);
     }
     .field-value {
       font-family: monospace;
       font-size: 14px;
       word-break: break-all;
-      background: #f6f8fa;
+      background: var(--color-bg-tertiary);
       padding: 8px;
       border-radius: 4px;
     }
     .field-value.valid {
-      background: #dafbe1;
-      color: #1a7f37;
+      background: var(--color-valid-bg);
+      color: var(--color-valid-text);
     }
-    .field-value.expired {
-      background: #ffebe9;
-      color: #cf222e;
+    .field-value.expired,
+    .field-value.error {
+      background: var(--color-error-bg);
+      color: var(--color-error-text);
     }
     .field-value.warning {
-      background: #fff8c5;
-      color: #9a6700;
+      background: var(--color-warning-bg);
+      color: var(--color-warning-text);
     }
-    .error {
-      background: #ffebe9;
-      border: 1px solid #ff8182;
-      color: #cf222e;
+    #error {
+      background: var(--color-error-bg);
+      border: 1px solid var(--color-error-border);
+      color: var(--color-error-text);
       padding: 12px 16px;
       border-radius: 6px;
       margin-bottom: 16px;
     }
     .privacy-notice {
-      background: #ddf4ff;
-      border: 1px solid #54aeff;
-      color: #0969da;
+      background: var(--color-info-bg);
+      border: 1px solid var(--color-info-border);
+      color: var(--color-info-text);
       padding: 10px 14px;
       border-radius: 6px;
       margin-bottom: 16px;
       font-size: 14px;
     }
     .help-section {
-      background: white;
-      border: 1px solid #d0d7de;
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
       border-radius: 6px;
       margin-bottom: 16px;
     }
@@ -155,11 +193,11 @@
       user-select: none;
     }
     .help-section summary:hover {
-      background: #f6f8fa;
+      background: var(--color-bg-primary);
     }
     .help-content {
       padding: 0 16px 16px 16px;
-      border-top: 1px solid #d0d7de;
+      border-top: 1px solid var(--color-border);
     }
     .help-content h3 {
       font-size: 14px;
@@ -174,24 +212,111 @@
       font-size: 14px;
     }
     .help-content code {
-      background: #f6f8fa;
+      background: var(--color-bg-tertiary);
       padding: 2px 6px;
       border-radius: 4px;
       font-size: 13px;
     }
     .help-content a {
-      color: #0969da;
+      color: var(--color-accent);
+    }
+    /* Modal styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal {
+      background: var(--color-bg-secondary);
+      border-radius: 8px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .modal-header h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      font-weight: normal;
+      cursor: pointer;
+      color: var(--color-text-secondary);
+      padding: 0;
+      line-height: 1;
+    }
+    .modal-close:hover {
+      color: var(--color-text-primary);
+    }
+    .modal-body {
+      padding: 16px;
+    }
+    .help-btn {
+      background: var(--color-accent);
+      font-size: 12px;
+      padding: 4px 8px;
+      margin-left: 8px;
+      margin-right: 0;
+      vertical-align: middle;
+    }
+    .help-btn:hover {
+      background: var(--color-accent-hover);
+    }
+    /* Field reference table styles */
+    .field-ref-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .field-ref-table th,
+    .field-ref-table td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .field-ref-table th {
+      background: var(--color-bg-tertiary);
+      font-weight: 600;
+    }
+    .field-ref-table tr:last-child td {
+      border-bottom: none;
+    }
+    .field-ref-table code {
+      background: var(--color-bg-tertiary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
     }
     .footer {
       margin-top: 32px;
       padding: 16px;
       text-align: center;
       font-size: 13px;
-      color: #57606a;
-      border-top: 1px solid #d0d7de;
+      color: var(--color-text-secondary);
+      border-top: 1px solid var(--color-border);
     }
     .footer a {
-      color: #0969da;
+      color: var(--color-accent);
       text-decoration: none;
     }
     .footer a:hover {
@@ -203,7 +328,7 @@
     .cert-details summary {
       cursor: pointer;
       font-size: 13px;
-      color: #0969da;
+      color: var(--color-accent);
       user-select: none;
     }
     .cert-details summary:hover {
@@ -212,7 +337,7 @@
     .cert-raw {
       margin-top: 8px;
       padding: 12px;
-      background: #f6f8fa;
+      background: var(--color-bg-tertiary);
       border-radius: 6px;
       font-size: 11px;
       overflow-x: auto;
@@ -225,7 +350,7 @@
     .xml-details summary {
       cursor: pointer;
       font-size: 13px;
-      color: #0969da;
+      color: var(--color-accent);
       user-select: none;
     }
     .xml-details summary:hover {
@@ -238,7 +363,7 @@
       position: absolute;
       top: 8px;
       right: 8px;
-      background: #24292f;
+      background: var(--color-btn-dark);
       color: white;
       border: none;
       padding: 6px 12px;
@@ -248,10 +373,10 @@
       z-index: 1;
     }
     .copy-btn:hover {
-      background: #32383f;
+      background: var(--color-btn-dark-hover);
     }
     .copy-btn.copied {
-      background: #2da44e;
+      background: var(--color-btn-primary);
     }
     .visually-hidden {
       position: absolute;
@@ -267,7 +392,7 @@
     .xml-raw {
       margin-top: 8px;
       padding: 12px;
-      background: #f6f8fa;
+      background: var(--color-bg-tertiary);
       border-radius: 6px;
       font-size: 11px;
       overflow-x: auto;
@@ -275,6 +400,55 @@
       word-break: break-all;
       max-height: 400px;
       overflow-y: auto;
+    }
+    /* Mobile responsive styles */
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.4em;
+      }
+      /* Table: stack rows on mobile */
+      .field-ref-table,
+      .field-ref-table thead,
+      .field-ref-table tbody,
+      .field-ref-table tr,
+      .field-ref-table th,
+      .field-ref-table td {
+        display: block;
+      }
+      .field-ref-table thead {
+        display: none;
+      }
+      .field-ref-table tr {
+        margin-bottom: 12px;
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .field-ref-table td {
+        border-bottom: none;
+        padding: 10px 12px;
+      }
+      .field-ref-table td:first-child {
+        background: var(--color-bg-tertiary);
+        font-weight: 600;
+      }
+      /* Modal: full width on mobile */
+      .modal {
+        margin: 16px;
+        max-width: calc(100% - 32px);
+        max-height: calc(100vh - 32px);
+      }
+      .modal-close {
+        font-size: 28px;
+        padding: 4px 8px;
+      }
+      .help-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
     }
   </style>
 </head>
@@ -312,6 +486,153 @@
     </div>
   </details>
 
+  <div id="helpModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle" onclick="if(event.target === event.currentTarget) closeModal('helpModal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="helpModalTitle">📜 X.509 Certificate Fields</h2>
+        <button class="modal-close" aria-label="Close modal" onclick="closeModal('helpModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table class="field-ref-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Issuer</code></td>
+              <td>The Certificate Authority (CA) or entity that issued this certificate. Shows the organisation that vouches for the certificate's authenticity.</td>
+            </tr>
+            <tr>
+              <td><code>Subject</code></td>
+              <td>The entity this certificate was issued to — typically the Identity Provider (IdP). This identifies who owns the certificate.</td>
+            </tr>
+            <tr>
+              <td><code>Valid From</code></td>
+              <td>The date/time when this certificate became valid. Shows <span style="color: var(--color-warning-text);">warning</span> if not yet valid.</td>
+            </tr>
+            <tr>
+              <td><code>Valid Until</code></td>
+              <td>The date/time when this certificate expires. Shows <span style="color: var(--color-error-text);">EXPIRED</span> if past this date. Certificate renewal required before expiry.</td>
+            </tr>
+            <tr>
+              <td><code>Signature Algorithm</code></td>
+              <td>The cryptographic algorithm used to sign this certificate (e.g., SHA256withRSA). Older algorithms like SHA1 may indicate security concerns.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAML Assertion Help Modal -->
+  <div id="samlHelpModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="samlHelpModalTitle" onclick="if(event.target === event.currentTarget) closeModal('samlHelpModal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="samlHelpModalTitle">🎫 SAML Assertion Fields</h2>
+        <button class="modal-close" aria-label="Close modal" onclick="closeModal('samlHelpModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table class="field-ref-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>NameID Format</code></td>
+              <td>The format/type of the user identifier. Common formats include <code>emailAddress</code>, <code>persistent</code> (opaque ID), and <code>transient</code> (session-specific ID).</td>
+            </tr>
+            <tr>
+              <td><code>NameID Value</code></td>
+              <td>The unique identifier for the authenticated user. This is the value the Service Provider uses to identify the user (e.g., email address or username).</td>
+            </tr>
+            <tr>
+              <td><code>Issuer</code></td>
+              <td>The SAML Identity Provider (IdP) that issued this assertion. Usually the IdP's entity ID or URL.</td>
+            </tr>
+            <tr>
+              <td><code>Destination</code></td>
+              <td>The URL where this SAML response should be delivered — typically the Service Provider's Assertion Consumer Service (ACS) URL.</td>
+            </tr>
+            <tr>
+              <td><code>Not Before</code></td>
+              <td>The time at which this assertion becomes valid. The assertion cannot be used before this time. Shows <span style="color: var(--color-warning-text);">warning</span> if not yet valid.</td>
+            </tr>
+            <tr>
+              <td><code>Auth Instant</code></td>
+              <td>The exact moment the user authenticated with the IdP (e.g., entered their password). Useful for determining session freshness.</td>
+            </tr>
+            <tr>
+              <td><code>Not On Or After</code></td>
+              <td>The expiry time — the assertion cannot be used on or after this time. Shows <span style="color: var(--color-error-text);">EXPIRED</span> if past this date.</td>
+            </tr>
+            <tr>
+              <td><code>Session Expires</code></td>
+              <td>The time when the SSO session at the IdP expires (SessionNotOnOrAfter). This may differ from assertion expiry — shows how long the user's IdP session remains valid.</td>
+            </tr>
+            <tr>
+              <td><code>Status</code></td>
+              <td>Whether the SAML authentication was successful. <code>Success</code> means authentication succeeded; other values indicate errors.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAML Attributes Help Modal -->
+  <div id="attrHelpModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="attrHelpModalTitle" onclick="if(event.target === event.currentTarget) closeModal('attrHelpModal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="attrHelpModalTitle">🏷️ SAML Attributes</h2>
+        <button class="modal-close" aria-label="Close modal" onclick="closeModal('attrHelpModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin: 0 0 12px 0;">SAML attributes are additional user information passed from the Identity Provider to the Service Provider. Common attributes include:</p>
+        <table class="field-ref-table">
+          <thead>
+            <tr>
+              <th>Attribute</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>email</code></td>
+              <td>The user's email address.</td>
+            </tr>
+            <tr>
+              <td><code>firstName</code> / <code>givenName</code></td>
+              <td>The user's first/given name.</td>
+            </tr>
+            <tr>
+              <td><code>lastName</code> / <code>surname</code></td>
+              <td>The user's last name/surname.</td>
+            </tr>
+            <tr>
+              <td><code>displayName</code></td>
+              <td>The user's display name (often full name).</td>
+            </tr>
+            <tr>
+              <td><code>groups</code> / <code>memberOf</code></td>
+              <td>Group memberships for the user, often used for role-based access control.</td>
+            </tr>
+            <tr>
+              <td><code>department</code></td>
+              <td>The user's department within the organisation.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="margin: 12px 0 0 0; font-size: 13px; color: var(--color-text-secondary);">Note: Actual attributes vary depending on IdP configuration and what the SP has requested.</p>
+      </div>
+    </div>
+  </div>
+
   <div class="input-section">
     <label for="samlInput">Paste Base64-encoded SAML Response:</label>
     <textarea id="samlInput" placeholder="PD94bWwgdmVyc2lvbj0iMS4wIi..."></textarea>
@@ -321,7 +642,7 @@
     </div>
   </div>
 
-  <div id="error" class="error" style="display: none;"></div>
+  <div id="error" style="display: none;"></div>
 
   <div id="results" class="results">
     <div class="section" id="rawXmlSection" style="display: none;">
@@ -339,7 +660,12 @@
     </div>
 
     <div class="section">
-      <div class="section-header">📜 X.509 Certificate</div>
+      <div class="section-header">
+        📜 X.509 Certificate
+        <button class="help-btn" aria-label="Help for X.509 Certificate fields" onclick="openModal('helpModal')">
+          <i class="fa-solid fa-circle-question"></i> Help
+        </button>
+      </div>
       <div class="section-body">
         <div class="field">
           <div class="field-label" title="The Certificate Authority (CA) or entity that issued this certificate">Issuer</div>
@@ -369,7 +695,12 @@
     </div>
 
     <div class="section">
-      <div class="section-header">🎫 SAML Assertion</div>
+      <div class="section-header">
+        🎫 SAML Assertion
+        <button class="help-btn" aria-label="Help for SAML Assertion fields" onclick="openModal('samlHelpModal')">
+          <i class="fa-solid fa-circle-question"></i> Help
+        </button>
+      </div>
       <div class="section-body">
         <div class="field">
           <div class="field-label" title="The format/type of the user identifier (e.g., email, persistent, transient)">NameID Format</div>
@@ -400,6 +731,10 @@
           <div class="field-value" id="notOnOrAfter">-</div>
         </div>
         <div class="field">
+          <div class="field-label" title="The time when the SSO session at the IdP expires — may differ from assertion expiry">Session Expires</div>
+          <div class="field-value" id="sessionNotOnOrAfter">-</div>
+        </div>
+        <div class="field">
           <div class="field-label" title="Whether the SAML authentication was successful">Status</div>
           <div class="field-value" id="samlStatus">-</div>
         </div>
@@ -407,7 +742,12 @@
     </div>
 
     <div class="section" id="attributesSection" style="display: none;">
-      <div class="section-header">🏷️ SAML Attributes</div>
+      <div class="section-header">
+        🏷️ SAML Attributes
+        <button class="help-btn" aria-label="Help for SAML Attributes" onclick="openModal('attrHelpModal')">
+          <i class="fa-solid fa-circle-question"></i> Help
+        </button>
+      </div>
       <div class="section-body" id="attributesBody">
       </div>
     </div>
@@ -439,13 +779,119 @@
       '1.2.840.10045.4.3.4': 'ecdsa-with-SHA512'
     };
 
+    // Modal helper functions
+    let lastFocusedElement = null;
+
+    function openModal(modalId) {
+      lastFocusedElement = document.activeElement;
+      const modal = document.getElementById(modalId);
+      modal.classList.add('show');
+      // Focus the close button
+      const closeBtn = modal.querySelector('.modal-close');
+      if (closeBtn) {
+        closeBtn.focus();
+      }
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('show');
+      // Return focus to the element that opened the modal
+      if (lastFocusedElement) {
+        lastFocusedElement.focus();
+        lastFocusedElement = null;
+      }
+    }
+
+    // Close modal on Escape key and trap focus
+    document.addEventListener('keydown', function(event) {
+      const visibleModal = document.querySelector('.modal-overlay.show');
+      if (!visibleModal) return;
+
+      if (event.key === 'Escape') {
+        closeModal(visibleModal.id);
+        return;
+      }
+
+      // Focus trap: cycle through focusable elements within modal
+      if (event.key === 'Tab') {
+        const focusableElements = visibleModal.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusableElements.length === 0) return;
+        
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        const focusableArray = Array.prototype.slice.call(focusableElements);
+        const activeElement = document.activeElement;
+        const isActiveInside = activeElement && 
+          visibleModal.contains(activeElement) && 
+          focusableArray.indexOf(activeElement) !== -1;
+
+        if (event.shiftKey) {
+          // Shift+Tab: if focus outside or on first element, go to last
+          if (!isActiveInside || activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab: if focus outside or on last element, go to first
+          if (!isActiveInside || activeElement === lastElement) {
+            event.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    });
+
+    // DOM element cache
+    const DOM = {
+      samlInput: document.getElementById('samlInput'),
+      error: document.getElementById('error'),
+      results: document.getElementById('results'),
+      copyBtn: document.getElementById('copyBtn'),
+      copyStatus: document.getElementById('copyStatus'),
+      xmlRaw: document.getElementById('xmlRaw'),
+      rawXmlSection: document.getElementById('rawXmlSection'),
+      certRaw: document.getElementById('certRaw'),
+      certDetails: document.getElementById('certDetails'),
+      certIssuer: document.getElementById('certIssuer'),
+      certNotBefore: document.getElementById('certNotBefore'),
+      certNotAfter: document.getElementById('certNotAfter'),
+      certSubject: document.getElementById('certSubject'),
+      certSigAlg: document.getElementById('certSigAlg'),
+      nameIdFormat: document.getElementById('nameIdFormat'),
+      nameIdValue: document.getElementById('nameIdValue'),
+      samlIssuer: document.getElementById('samlIssuer'),
+      samlDestination: document.getElementById('samlDestination'),
+      notBefore: document.getElementById('notBefore'),
+      authnInstant: document.getElementById('authnInstant'),
+      notOnOrAfter: document.getElementById('notOnOrAfter'),
+      sessionNotOnOrAfter: document.getElementById('sessionNotOnOrAfter'),
+      samlStatus: document.getElementById('samlStatus'),
+      attributesSection: document.getElementById('attributesSection'),
+      attributesBody: document.getElementById('attributesBody')
+    };
+
+    /**
+     * Set field status with value and optional status class
+     * @param {HTMLElement} element - The field element to update
+     * @param {string} value - The text value to display
+     * @param {string|null} status - Status class: 'valid', 'warning', 'expired', 'error', or null
+     * @param {string|null} suffix - Optional suffix to append (e.g., ' (EXPIRED)')
+     */
+    function setFieldStatus(element, value, status, suffix) {
+      element.classList.remove('valid', 'warning', 'expired', 'error');
+      element.textContent = value + (suffix || '');
+      if (status) {
+        element.classList.add(status);
+      }
+    }
+
     function decode() {
-      const input = document.getElementById('samlInput').value.trim();
-      const errorDiv = document.getElementById('error');
-      const resultsDiv = document.getElementById('results');
+      const input = DOM.samlInput.value.trim();
       
-      errorDiv.style.display = 'none';
-      resultsDiv.classList.remove('show');
+      DOM.error.style.display = 'none';
+      DOM.results.classList.remove('show');
 
       if (!input) {
         showError('Please enter a SAML Response');
@@ -480,16 +926,15 @@
         // Display raw XML
         displayRawXml(xmlString);
 
-        resultsDiv.classList.add('show');
+        DOM.results.classList.add('show');
       } catch (e) {
         showError('Failed to decode: ' + e.message);
       }
     }
 
     function showError(message) {
-      const errorDiv = document.getElementById('error');
-      errorDiv.textContent = message;
-      errorDiv.style.display = 'block';
+      DOM.error.textContent = message;
+      DOM.error.style.display = 'block';
     }
 
     function formatUTC(date) {
@@ -507,15 +952,15 @@
       }
       pemLines.push('-----END CERTIFICATE-----');
       
-      document.getElementById('certRaw').textContent = pemLines.join('\n');
-      document.getElementById('certDetails').style.display = 'block';
+      DOM.certRaw.textContent = pemLines.join('\n');
+      DOM.certDetails.style.display = 'block';
     }
 
     function displayRawXml(xmlString) {
       // Pretty print XML
       const formatted = formatXml(xmlString);
-      document.getElementById('xmlRaw').textContent = formatted;
-      document.getElementById('rawXmlSection').style.display = 'block';
+      DOM.xmlRaw.textContent = formatted;
+      DOM.rawXmlSection.style.display = 'block';
       // Reset details state to closed on new decode
       document.querySelector('#rawXmlSection .xml-details').removeAttribute('open');
     }
@@ -644,9 +1089,7 @@
     let copyTimeoutId = null;
     
     function copyXml() {
-      const xmlContent = document.getElementById('xmlRaw').textContent;
-      const statusEl = document.getElementById('copyStatus');
-      const btn = document.querySelector('.copy-btn');
+      const xmlContent = DOM.xmlRaw.textContent;
 
       // Clear any pending timeout
       if (copyTimeoutId) {
@@ -656,34 +1099,34 @@
 
       // Check if Clipboard API is available
       if (!navigator.clipboard || !navigator.clipboard.writeText) {
-        btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Not supported';
-        statusEl.textContent = 'Clipboard API not available. Please copy manually.';
+        DOM.copyBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Not supported';
+        DOM.copyStatus.textContent = 'Clipboard API not available. Please copy manually.';
         copyTimeoutId = setTimeout(function() {
-          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-          statusEl.textContent = '';
+          DOM.copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+          DOM.copyStatus.textContent = '';
           copyTimeoutId = null;
         }, 3000);
         return;
       }
 
       navigator.clipboard.writeText(xmlContent).then(function() {
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
-        btn.classList.add('copied');
-        statusEl.textContent = 'XML copied to clipboard';
+        DOM.copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        DOM.copyBtn.classList.add('copied');
+        DOM.copyStatus.textContent = 'XML copied to clipboard';
         copyTimeoutId = setTimeout(function() {
-          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-          btn.classList.remove('copied');
-          statusEl.textContent = '';
+          DOM.copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+          DOM.copyBtn.classList.remove('copied');
+          DOM.copyStatus.textContent = '';
           copyTimeoutId = null;
         }, 2000);
       }).catch(function(error) {
         console.error('Failed to copy XML to clipboard:', error);
-        btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
-        btn.classList.remove('copied');
-        statusEl.textContent = 'Failed to copy XML to clipboard';
+        DOM.copyBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
+        DOM.copyBtn.classList.remove('copied');
+        DOM.copyStatus.textContent = 'Failed to copy XML to clipboard';
         copyTimeoutId = setTimeout(function() {
-          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-          statusEl.textContent = '';
+          DOM.copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+          DOM.copyStatus.textContent = '';
           copyTimeoutId = null;
         }, 2000);
       });
@@ -720,7 +1163,7 @@
         
         // Issuer
         const issuer = parseName(tbsCert.children[idx]);
-        document.getElementById('certIssuer').textContent = issuer;
+        DOM.certIssuer.textContent = issuer;
         idx++;
         
         // Validity
@@ -728,42 +1171,37 @@
         const notBefore = parseTime(validity.children[0]);
         const notAfter = parseTime(validity.children[1]);
         
-        const notBeforeEl = document.getElementById('certNotBefore');
-        const notAfterEl = document.getElementById('certNotAfter');
-        
-        notBeforeEl.textContent = formatUTC(notBefore);
-        notAfterEl.textContent = formatUTC(notAfter);
-        
-        // Check validity
+        // Check validity and set field status
         const now = new Date();
-        notBeforeEl.classList.remove('warning', 'valid', 'expired');
-        notAfterEl.classList.remove('warning', 'valid', 'expired');
-        if (now < notBefore) {
-          notBeforeEl.classList.add('warning');
-          notBeforeEl.textContent += ' (not yet valid)';
+        if (isNaN(notBefore.getTime())) {
+          setFieldStatus(DOM.certNotBefore, 'Invalid date format', 'warning');
+        } else if (now < notBefore) {
+          setFieldStatus(DOM.certNotBefore, formatUTC(notBefore), 'warning', ' (not yet valid)');
         } else {
-          notBeforeEl.classList.add('valid');
+          setFieldStatus(DOM.certNotBefore, formatUTC(notBefore), 'valid');
         }
-        if (now > notAfter) {
-          notAfterEl.classList.add('expired');
-          notAfterEl.textContent += ' (EXPIRED)';
+        
+        if (isNaN(notAfter.getTime())) {
+          setFieldStatus(DOM.certNotAfter, 'Invalid date format', 'warning');
+        } else if (now > notAfter) {
+          setFieldStatus(DOM.certNotAfter, formatUTC(notAfter), 'expired', ' (EXPIRED)');
         } else {
-          notAfterEl.classList.add('valid');
+          setFieldStatus(DOM.certNotAfter, formatUTC(notAfter), 'valid');
         }
         
         idx++;
         
         // Subject
         const subject = parseName(tbsCert.children[idx]);
-        document.getElementById('certSubject').textContent = subject;
+        DOM.certSubject.textContent = subject;
         
         // Signature algorithm OID
         const sigAlgOid = parseOID(sigAlgSeq.children[0].bytes);
-        document.getElementById('certSigAlg').textContent = SIG_ALG_MAP[sigAlgOid] || sigAlgOid;
+        DOM.certSigAlg.textContent = SIG_ALG_MAP[sigAlgOid] || sigAlgOid;
         
       } catch (e) {
         console.error('Certificate parsing error:', e);
-        document.getElementById('certIssuer').textContent = 'Failed to parse certificate';
+        DOM.certIssuer.textContent = 'Failed to parse certificate';
       }
     }
 
@@ -863,24 +1301,27 @@
     }
 
     function extractSamlInfo(xmlDoc) {
+      // Current time for all validity checks
+      const now = new Date();
+
       // NameID
       const nameId = xmlDoc.querySelector('NameID') || xmlDoc.querySelector('*|NameID');
       if (nameId) {
-        document.getElementById('nameIdFormat').textContent = nameId.getAttribute('Format') || 'Not specified';
-        document.getElementById('nameIdValue').textContent = nameId.textContent;
+        DOM.nameIdFormat.textContent = nameId.getAttribute('Format') || 'Not specified';
+        DOM.nameIdValue.textContent = nameId.textContent;
       }
 
       // Issuer (from Response or Assertion)
       const issuer = xmlDoc.querySelector('Issuer') || xmlDoc.querySelector('*|Issuer');
       if (issuer) {
-        document.getElementById('samlIssuer').textContent = issuer.textContent;
+        DOM.samlIssuer.textContent = issuer.textContent;
       }
 
       // Destination
       const response = xmlDoc.documentElement;
       const destination = response.getAttribute('Destination');
       if (destination) {
-        document.getElementById('samlDestination').textContent = destination;
+        DOM.samlDestination.textContent = destination;
       }
 
       // NotBefore and NotOnOrAfter from Conditions
@@ -892,47 +1333,35 @@
       if (conditions) {
         notBefore = conditions.getAttribute('NotBefore');
       }
-      const notBeforeEl = document.getElementById('notBefore');
-      notBeforeEl.classList.remove('warning', 'valid', 'expired');
       if (notBefore) {
         const notBeforeDate = new Date(notBefore);
-        
         if (isNaN(notBeforeDate.getTime())) {
-          notBeforeEl.classList.add('warning');
-          notBeforeEl.textContent = 'Invalid date format';
+          setFieldStatus(DOM.notBefore, 'Invalid date format', 'warning');
+        } else if (now < notBeforeDate) {
+          setFieldStatus(DOM.notBefore, formatUTC(notBeforeDate), 'warning', ' (not yet valid)');
         } else {
-          const now = new Date();
-          notBeforeEl.textContent = formatUTC(notBeforeDate);
-          if (now < notBeforeDate) {
-            notBeforeEl.classList.add('warning');
-            notBeforeEl.textContent += ' (not yet valid)';
-          } else {
-            notBeforeEl.classList.add('valid');
-          }
+          setFieldStatus(DOM.notBefore, formatUTC(notBeforeDate), 'valid');
         }
       } else {
-        notBeforeEl.textContent = '-';
+        setFieldStatus(DOM.notBefore, '-', null);
       }
 
       // AuthnInstant
       const authnStatement = xmlDoc.querySelector('AuthnStatement') || xmlDoc.querySelector('*|AuthnStatement');
-      const authnInstantEl = document.getElementById('authnInstant');
-      authnInstantEl.classList.remove('warning', 'valid', 'expired');
       if (authnStatement) {
         const authnInstant = authnStatement.getAttribute('AuthnInstant');
         if (authnInstant) {
           const authnDate = new Date(authnInstant);
           if (isNaN(authnDate.getTime())) {
-            authnInstantEl.classList.add('warning');
-            authnInstantEl.textContent = 'Invalid date format';
+            setFieldStatus(DOM.authnInstant, 'Invalid date format', 'warning');
           } else {
-            authnInstantEl.textContent = formatUTC(authnDate);
+            setFieldStatus(DOM.authnInstant, formatUTC(authnDate), null);
           }
         } else {
-          authnInstantEl.textContent = '-';
+          setFieldStatus(DOM.authnInstant, '-', null);
         }
       } else {
-        authnInstantEl.textContent = '-';
+        setFieldStatus(DOM.authnInstant, '-', null);
       }
 
       // NotOnOrAfter
@@ -944,40 +1373,51 @@
         notOnOrAfter = subjectConfData.getAttribute('NotOnOrAfter');
       }
       
-      const notOnOrAfterEl = document.getElementById('notOnOrAfter');
-      notOnOrAfterEl.classList.remove('warning', 'valid', 'expired');
       if (notOnOrAfter) {
         const expiry = new Date(notOnOrAfter);
-        
         if (isNaN(expiry.getTime())) {
-          notOnOrAfterEl.classList.add('warning');
-          notOnOrAfterEl.textContent = 'Invalid date format';
+          setFieldStatus(DOM.notOnOrAfter, 'Invalid date format', 'warning');
+        } else if (now > expiry) {
+          setFieldStatus(DOM.notOnOrAfter, formatUTC(expiry), 'expired', ' (EXPIRED)');
         } else {
-          const now = new Date();
-          notOnOrAfterEl.textContent = formatUTC(expiry);
-          if (now > expiry) {
-            notOnOrAfterEl.classList.add('expired');
-            notOnOrAfterEl.textContent += ' (EXPIRED)';
-          } else {
-            notOnOrAfterEl.classList.add('valid');
-            notOnOrAfterEl.textContent += ' (valid)';
-          }
+          setFieldStatus(DOM.notOnOrAfter, formatUTC(expiry), 'valid');
         }
       } else {
-        notOnOrAfterEl.textContent = '-';
+        setFieldStatus(DOM.notOnOrAfter, '-', null);
+      }
+
+      // SessionNotOnOrAfter (from AuthnStatement)
+      if (authnStatement) {
+        const sessionExpiry = authnStatement.getAttribute('SessionNotOnOrAfter');
+        if (sessionExpiry) {
+          const sessionDate = new Date(sessionExpiry);
+          if (isNaN(sessionDate.getTime())) {
+            setFieldStatus(DOM.sessionNotOnOrAfter, 'Invalid date format', 'warning');
+          } else if (now > sessionDate) {
+            setFieldStatus(DOM.sessionNotOnOrAfter, formatUTC(sessionDate), 'expired', ' (EXPIRED)');
+          } else {
+            setFieldStatus(DOM.sessionNotOnOrAfter, formatUTC(sessionDate), 'valid');
+          }
+        } else {
+          setFieldStatus(DOM.sessionNotOnOrAfter, '-', null);
+        }
+      } else {
+        setFieldStatus(DOM.sessionNotOnOrAfter, '-', null);
       }
 
       // Status
       const statusCode = xmlDoc.querySelector('StatusCode') || xmlDoc.querySelector('*|StatusCode');
       if (statusCode) {
         const statusValue = statusCode.getAttribute('Value');
-        const statusEl = document.getElementById('samlStatus');
-        statusEl.textContent = statusValue;
-        if (statusValue.includes('Success')) {
-          statusEl.classList.add('valid');
+        if (statusValue && statusValue.includes('Success')) {
+          setFieldStatus(DOM.samlStatus, statusValue, 'valid');
+        } else if (statusValue) {
+          setFieldStatus(DOM.samlStatus, statusValue, 'error');
         } else {
-          statusEl.classList.add('expired');
+          setFieldStatus(DOM.samlStatus, '-', null);
         }
+      } else {
+        setFieldStatus(DOM.samlStatus, '-', null);
       }
 
       // Attributes
@@ -991,14 +1431,12 @@
       ];
 
       const attributes = xmlDoc.querySelectorAll('Attribute, *|Attribute');
-      const attributesSection = document.getElementById('attributesSection');
-      const attributesBody = document.getElementById('attributesBody');
       
       // Clear previous attributes
-      attributesBody.innerHTML = '';
+      DOM.attributesBody.innerHTML = '';
       
       if (attributes.length === 0) {
-        attributesSection.style.display = 'none';
+        DOM.attributesSection.style.display = 'none';
         return;
       }
 
@@ -1031,11 +1469,11 @@
             <div class="field-label">${escapeHtml(friendlyName)}</div>
             <div class="field-value">${escapeHtml(value)}</div>
           `;
-          attributesBody.appendChild(fieldDiv);
+          DOM.attributesBody.appendChild(fieldDiv);
         }
       });
 
-      attributesSection.style.display = hasVisibleAttributes ? 'block' : 'none';
+      DOM.attributesSection.style.display = hasVisibleAttributes ? 'block' : 'none';
     }
 
     function escapeHtml(text) {
@@ -1045,28 +1483,28 @@
     }
 
     function clearAll() {
-      document.getElementById('samlInput').value = '';
-      document.getElementById('error').style.display = 'none';
-      document.getElementById('results').classList.remove('show');
+      DOM.samlInput.value = '';
+      DOM.error.style.display = 'none';
+      DOM.results.classList.remove('show');
       
       // Reset all field values and classes
       const fields = document.querySelectorAll('.field-value');
       fields.forEach(f => {
         f.textContent = '-';
-        f.classList.remove('valid', 'expired', 'warning');
+        f.classList.remove('valid', 'expired', 'warning', 'error');
       });
       
       // Clear and hide attributes section
-      document.getElementById('attributesBody').innerHTML = '';
-      document.getElementById('attributesSection').style.display = 'none';
+      DOM.attributesBody.innerHTML = '';
+      DOM.attributesSection.style.display = 'none';
       
       // Clear and hide certificate raw section
-      document.getElementById('certRaw').textContent = '';
-      document.getElementById('certDetails').style.display = 'none';
+      DOM.certRaw.textContent = '';
+      DOM.certDetails.style.display = 'none';
       
       // Clear and hide raw XML section
-      document.getElementById('xmlRaw').textContent = '';
-      document.getElementById('rawXmlSection').style.display = 'none';
+      DOM.xmlRaw.textContent = '';
+      DOM.rawXmlSection.style.display = 'none';
       
       // Close all <details> elements within the results so they are collapsed next time
       const detailsElements = document.querySelectorAll('#results details');
@@ -1077,16 +1515,13 @@
         clearTimeout(copyTimeoutId);
         copyTimeoutId = null;
       }
-      const copyBtn = document.querySelector('.copy-btn');
-      if (copyBtn) {
-        copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-        copyBtn.classList.remove('copied');
-      }
-      document.getElementById('copyStatus').textContent = '';
+      DOM.copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+      DOM.copyBtn.classList.remove('copied');
+      DOM.copyStatus.textContent = '';
     }
 
     // Add event listener for copy button
-    document.getElementById('copyBtn').addEventListener('click', copyXml);
+    DOM.copyBtn.addEventListener('click', copyXml);
   </script>
 </body>
 </html>
