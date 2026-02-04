@@ -1,1527 +1,2083 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAML Response Decoder</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <style>
-    :root {
-      /* Colours - Neutral */
-      --color-bg-primary: #f6f8fa;
-      --color-bg-secondary: white;
-      --color-bg-tertiary: #f6f8fa;
-      --color-text-primary: #24292f;
-      --color-text-secondary: #57606a;
-      --color-border: #d0d7de;
-      
-      /* Colours - Interactive */
-      --color-accent: #0969da;
-      --color-accent-hover: #0550ae;
-      --color-btn-primary: #2da44e;
-      --color-btn-primary-hover: #2c974b;
-      --color-btn-secondary: #6e7781;
-      --color-btn-secondary-hover: #57606a;
-      --color-btn-dark: #24292f;
-      --color-btn-dark-hover: #32383f;
-      
-      /* Colours - Status */
-      --color-valid-bg: #dafbe1;
-      --color-valid-text: #1a7f37;
-      --color-error-bg: #ffebe9;
-      --color-error-text: #cf222e;
-      --color-error-border: #ff8182;
-      --color-warning-bg: #fff8c5;
-      --color-warning-text: #9a6700;
-      --color-info-bg: #ddf4ff;
-      --color-info-border: #54aeff;
-      --color-info-text: #0969da;
-      --color-accent-shadow: rgba(9, 105, 218, 0.15);
-    }
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 20px;
-      background: var(--color-bg-primary);
-      color: var(--color-text-primary);
-    }
-    h1 {
-      color: var(--color-text-primary);
-      border-bottom: 1px solid var(--color-border);
-      padding-bottom: 10px;
-    }
-    .input-section {
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    textarea {
-      width: 100%;
-      height: 150px;
-      padding: 12px;
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
-      font-family: monospace;
-      font-size: 13px;
-      resize: vertical;
-    }
-    textarea:focus {
-      outline: none;
-      border-color: var(--color-accent);
-      box-shadow: 0 0 0 3px var(--color-accent-shadow);
-    }
-    button {
-      background: var(--color-btn-primary);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-right: 10px;
-    }
-    button:hover {
-      background: var(--color-btn-primary-hover);
-    }
-    button.secondary {
-      background: var(--color-btn-secondary);
-    }
-    button.secondary:hover {
-      background: var(--color-btn-secondary-hover);
-    }
-    .results {
-      display: none;
-    }
-    .results.show {
-      display: block;
-    }
-    .section {
-      background: var(--color-bg-secondary);
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
-      margin-bottom: 16px;
-      overflow: hidden;
-    }
-    .section-header {
-      background: var(--color-bg-primary);
-      padding: 12px 16px;
-      font-weight: 600;
-      border-bottom: 1px solid var(--color-border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .section-body {
-      padding: 16px;
-    }
-    .field {
-      margin-bottom: 12px;
-    }
-    .field:last-child {
-      margin-bottom: 0;
-    }
-    .field-label {
-      font-size: 12px;
-      color: var(--color-text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-      cursor: help;
-      transition: color 0.2s ease;
-    }
-    .field-label[title]:hover {
-      color: var(--color-accent);
-    }
-    .field-value {
-      font-family: monospace;
-      font-size: 14px;
-      word-break: break-all;
-      background: var(--color-bg-tertiary);
-      padding: 8px;
-      border-radius: 4px;
-    }
-    .field-value.valid {
-      background: var(--color-valid-bg);
-      color: var(--color-valid-text);
-    }
-    .field-value.expired,
-    .field-value.error {
-      background: var(--color-error-bg);
-      color: var(--color-error-text);
-    }
-    .field-value.warning {
-      background: var(--color-warning-bg);
-      color: var(--color-warning-text);
-    }
-    #error {
-      background: var(--color-error-bg);
-      border: 1px solid var(--color-error-border);
-      color: var(--color-error-text);
-      padding: 12px 16px;
-      border-radius: 6px;
-      margin-bottom: 16px;
-    }
-    .privacy-notice {
-      background: var(--color-info-bg);
-      border: 1px solid var(--color-info-border);
-      color: var(--color-info-text);
-      padding: 10px 14px;
-      border-radius: 6px;
-      margin-bottom: 16px;
-      font-size: 14px;
-    }
-    .help-section {
-      background: var(--color-bg-secondary);
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
-      margin-bottom: 16px;
-    }
-    .help-section summary {
-      padding: 12px 16px;
-      cursor: pointer;
-      font-weight: 600;
-      user-select: none;
-    }
-    .help-section summary:hover {
-      background: var(--color-bg-primary);
-    }
-    .help-content {
-      padding: 0 16px 16px 16px;
-      border-top: 1px solid var(--color-border);
-    }
-    .help-content h3 {
-      font-size: 14px;
-      margin: 16px 0 8px 0;
-    }
-    .help-content ol, .help-content ul {
-      margin: 0;
-      padding-left: 24px;
-    }
-    .help-content li {
-      margin-bottom: 4px;
-      font-size: 14px;
-    }
-    .help-content code {
-      background: var(--color-bg-tertiary);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 13px;
-    }
-    .help-content a {
-      color: var(--color-accent);
-    }
-    /* Modal styles */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 100;
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-overlay.show {
-      display: flex;
-    }
-    .modal {
-      background: var(--color-bg-secondary);
-      border-radius: 8px;
-      max-width: 600px;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px;
-      border-bottom: 1px solid var(--color-border);
-    }
-    .modal-header h2 {
-      margin: 0;
-      font-size: 18px;
-    }
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      font-weight: normal;
-      cursor: pointer;
-      color: var(--color-text-secondary);
-      padding: 0;
-      line-height: 1;
-    }
-    .modal-close:hover {
-      color: var(--color-text-primary);
-    }
-    .modal-body {
-      padding: 16px;
-    }
-    .help-btn {
-      background: var(--color-accent);
-      font-size: 12px;
-      padding: 4px 8px;
-      margin-left: 8px;
-      margin-right: 0;
-      vertical-align: middle;
-    }
-    .help-btn:hover {
-      background: var(--color-accent-hover);
-    }
-    /* Field reference table styles */
-    .field-ref-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    .field-ref-table th,
-    .field-ref-table td {
-      padding: 8px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--color-border);
-    }
-    .field-ref-table th {
-      background: var(--color-bg-tertiary);
-      font-weight: 600;
-    }
-    .field-ref-table tr:last-child td {
-      border-bottom: none;
-    }
-    .field-ref-table code {
-      background: var(--color-bg-tertiary);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-    .footer {
-      margin-top: 32px;
-      padding: 16px;
-      text-align: center;
-      font-size: 13px;
-      color: var(--color-text-secondary);
-      border-top: 1px solid var(--color-border);
-    }
-    .footer a {
-      color: var(--color-accent);
-      text-decoration: none;
-    }
-    .footer a:hover {
-      text-decoration: underline;
-    }
-    .cert-details {
-      margin-top: 12px;
-    }
-    .cert-details summary {
-      cursor: pointer;
-      font-size: 13px;
-      color: var(--color-accent);
-      user-select: none;
-    }
-    .cert-details summary:hover {
-      text-decoration: underline;
-    }
-    .cert-raw {
-      margin-top: 8px;
-      padding: 12px;
-      background: var(--color-bg-tertiary);
-      border-radius: 6px;
-      font-size: 11px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-    .xml-details {
-      margin-top: 0;
-    }
-    .xml-details summary {
-      cursor: pointer;
-      font-size: 13px;
-      color: var(--color-accent);
-      user-select: none;
-    }
-    .xml-details summary:hover {
-      text-decoration: underline;
-    }
-    .xml-container {
-      position: relative;
-    }
-    .copy-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: var(--color-btn-dark);
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      cursor: pointer;
-      z-index: 1;
-    }
-    .copy-btn:hover {
-      background: var(--color-btn-dark-hover);
-    }
-    .copy-btn.copied {
-      background: var(--color-btn-primary);
-    }
-    .visually-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-    .xml-raw {
-      margin-top: 8px;
-      padding: 12px;
-      background: var(--color-bg-tertiary);
-      border-radius: 6px;
-      font-size: 11px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-all;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    /* Mobile responsive styles */
-    @media (max-width: 600px) {
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SAML Response Decoder</title>
+    <script>
+      // Prevent flash of wrong theme by setting data-theme before styles load
+      ;(function () {
+        var theme = 'light'
+
+        // Apply system preference first, if available
+        if (
+          typeof window.matchMedia === 'function' &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches
+        ) {
+          theme = 'dark'
+        }
+
+        // Override with saved preference, if accessible
+        try {
+          var saved = localStorage.getItem('samlresponse-decoder:theme')
+          if (saved === 'light' || saved === 'dark') {
+            theme = saved
+          }
+        } catch (e) {
+          // localStorage unavailable; keep system-based theme
+        }
+
+        document.documentElement.setAttribute('data-theme', theme)
+      })()
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <style>
+      :root {
+        /* Colours - Neutral */
+        --color-bg-primary: #f6f8fa;
+        --color-bg-secondary: white;
+        --color-bg-tertiary: #f6f8fa;
+        --color-text-primary: #24292f;
+        --color-text-secondary: #57606a;
+        --color-border: #d0d7de;
+
+        /* Colours - Interactive */
+        --color-accent: #0969da;
+        --color-accent-hover: #0550ae;
+        --color-btn-primary: #2da44e;
+        --color-btn-primary-hover: #2c974b;
+        --color-btn-secondary: #6e7781;
+        --color-btn-secondary-hover: #57606a;
+        --color-btn-dark: #24292f;
+        --color-btn-dark-hover: #32383f;
+        --color-btn-text: #ffffff;
+
+        /* Colours - Status */
+        --color-valid-bg: #dafbe1;
+        --color-valid-text: #1a7f37;
+        --color-error-bg: #ffebe9;
+        --color-error-text: #cf222e;
+        --color-error-border: #ff8182;
+        --color-warning-bg: #fff8c5;
+        --color-warning-text: #9a6700;
+        --color-info-bg: #ddf4ff;
+        --color-info-border: #54aeff;
+        --color-info-text: #0969da;
+        --color-accent-shadow: rgba(9, 105, 218, 0.15);
+        --color-modal-overlay: rgba(0, 0, 0, 0.5);
+        --color-modal-shadow: rgba(0, 0, 0, 0.3);
+      }
+      [data-theme='dark'] {
+        /* Colours - Neutral */
+        --color-bg-primary: #0d1117;
+        --color-bg-secondary: #161b22;
+        --color-bg-tertiary: #21262d;
+        --color-text-primary: #c9d1d9;
+        --color-text-secondary: #8b949e;
+        --color-border: #30363d;
+
+        /* Colours - Interactive */
+        --color-accent: #58a6ff;
+        --color-accent-hover: #79b8ff;
+        --color-btn-primary: #238636;
+        --color-btn-primary-hover: #2ea043;
+        --color-btn-secondary: #30363d;
+        --color-btn-secondary-hover: #484f58;
+        --color-btn-dark: #21262d;
+        --color-btn-dark-hover: #30363d;
+        --color-btn-text: #ffffff;
+
+        /* Colours - Status */
+        --color-valid-bg: #1f352a;
+        --color-valid-text: #3fb950;
+        --color-error-bg: #3d1f20;
+        --color-error-text: #f85149;
+        --color-error-border: #f85149;
+        --color-warning-bg: #3d2e00;
+        --color-warning-text: #d29922;
+        --color-info-bg: #1a2332;
+        --color-info-border: #58a6ff;
+        --color-info-text: #58a6ff;
+        --color-accent-shadow: rgba(88, 166, 255, 0.15);
+        --color-modal-overlay: rgba(0, 0, 0, 0.7);
+        --color-modal-shadow: rgba(0, 0, 0, 0.5);
+      }
+      * {
+        box-sizing: border-box;
+      }
       body {
-        padding: 12px;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        background: var(--color-bg-primary);
+        color: var(--color-text-primary);
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
       }
-      h1 {
-        font-size: 1.4em;
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition: none !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+        }
       }
-      /* Table: stack rows on mobile */
-      .field-ref-table,
-      .field-ref-table thead,
-      .field-ref-table tbody,
-      .field-ref-table tr,
-      .field-ref-table th,
-      .field-ref-table td {
-        display: block;
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
       }
-      .field-ref-table thead {
-        display: none;
+      .header h1 {
+        margin: 0;
+        border-bottom: none;
+        padding-bottom: 0;
       }
-      .field-ref-table tr {
-        margin-bottom: 12px;
+      .theme-toggle {
+        background: var(--color-bg-tertiary);
         border: 1px solid var(--color-border);
         border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 16px;
+        color: var(--color-text-primary);
+        margin-right: 0;
+        transition:
+          background-color 0.2s ease,
+          border-color 0.2s ease;
+      }
+      .theme-toggle:hover {
+        background: var(--color-bg-secondary);
+        border-color: var(--color-accent);
+      }
+      .theme-toggle:focus {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
+      }
+      .theme-toggle .icon-light {
+        display: none;
+      }
+      .theme-toggle .icon-dark {
+        display: inline;
+      }
+      [data-theme='dark'] .theme-toggle .icon-light {
+        display: inline;
+      }
+      [data-theme='dark'] .theme-toggle .icon-dark {
+        display: none;
+      }
+      h1 {
+        color: var(--color-text-primary);
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 10px;
+      }
+      .input-section {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      textarea {
+        width: 100%;
+        height: 150px;
+        padding: 12px;
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 13px;
+        resize: vertical;
+        background-color: var(--color-bg-secondary);
+        color: var(--color-text-primary);
+      }
+      textarea::placeholder {
+        color: var(--color-text-secondary);
+      }
+      textarea:focus {
+        outline: none;
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-shadow);
+      }
+      button {
+        background: var(--color-btn-primary);
+        color: var(--color-btn-text);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        background: var(--color-btn-primary-hover);
+      }
+      button.secondary {
+        background: var(--color-btn-secondary);
+      }
+      button.secondary:hover {
+        background: var(--color-btn-secondary-hover);
+      }
+      .results {
+        display: none;
+      }
+      .results.show {
+        display: block;
+      }
+      .section {
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        margin-bottom: 16px;
         overflow: hidden;
       }
-      .field-ref-table td {
-        border-bottom: none;
-        padding: 10px 12px;
+      .section-header {
+        background: var(--color-bg-primary);
+        padding: 12px 16px;
+        font-weight: 600;
+        border-bottom: 1px solid var(--color-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
       }
-      .field-ref-table td:first-child {
+      .section-body {
+        padding: 16px;
+      }
+      .field {
+        margin-bottom: 12px;
+      }
+      .field:last-child {
+        margin-bottom: 0;
+      }
+      .field-label {
+        font-size: 12px;
+        color: var(--color-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        cursor: help;
+        transition: color 0.2s ease;
+      }
+      .field-label[title]:hover {
+        color: var(--color-accent);
+      }
+      .field-value {
+        font-family: monospace;
+        font-size: 14px;
+        word-break: break-all;
+        background: var(--color-bg-tertiary);
+        padding: 8px;
+        border-radius: 4px;
+      }
+      .field-value.valid {
+        background: var(--color-valid-bg);
+        color: var(--color-valid-text);
+      }
+      .field-value.expired,
+      .field-value.error {
+        background: var(--color-error-bg);
+        color: var(--color-error-text);
+      }
+      .field-value.warning {
+        background: var(--color-warning-bg);
+        color: var(--color-warning-text);
+      }
+      #error {
+        background: var(--color-error-bg);
+        border: 1px solid var(--color-error-border);
+        color: var(--color-error-text);
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+      }
+      .privacy-notice {
+        background: var(--color-info-bg);
+        border: 1px solid var(--color-info-border);
+        color: var(--color-info-text);
+        padding: 10px 14px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        font-size: 14px;
+      }
+      .help-section {
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        margin-bottom: 16px;
+      }
+      .help-section summary {
+        padding: 12px 16px;
+        cursor: pointer;
+        font-weight: 600;
+        user-select: none;
+      }
+      .help-section summary:hover {
+        background: var(--color-bg-primary);
+      }
+      .help-content {
+        padding: 0 16px 16px 16px;
+        border-top: 1px solid var(--color-border);
+      }
+      .help-content h3 {
+        font-size: 14px;
+        margin: 16px 0 8px 0;
+      }
+      .help-content ol,
+      .help-content ul {
+        margin: 0;
+        padding-left: 24px;
+      }
+      .help-content li {
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+      .help-content code {
+        background: var(--color-bg-tertiary);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      .help-content a {
+        color: var(--color-accent);
+      }
+      /* Modal styles */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--color-modal-overlay);
+        z-index: 100;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-overlay.show {
+        display: flex;
+      }
+      .modal {
+        background: var(--color-bg-secondary);
+        border-radius: 8px;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 8px 32px var(--color-modal-shadow);
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid var(--color-border);
+      }
+      .modal-header h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        font-weight: normal;
+        cursor: pointer;
+        color: var(--color-text-secondary);
+        padding: 0;
+        line-height: 1;
+      }
+      .modal-close:hover {
+        color: var(--color-text-primary);
+      }
+      .modal-body {
+        padding: 16px;
+      }
+      .help-btn {
+        background: var(--color-accent);
+        font-size: 12px;
+        padding: 4px 8px;
+        margin-left: 8px;
+        margin-right: 0;
+        vertical-align: middle;
+      }
+      .help-btn:hover {
+        background: var(--color-accent-hover);
+      }
+      /* Field reference table styles */
+      .field-ref-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .field-ref-table th,
+      .field-ref-table td {
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--color-border);
+      }
+      .field-ref-table th {
         background: var(--color-bg-tertiary);
         font-weight: 600;
       }
-      /* Modal: full width on mobile */
-      .modal {
-        margin: 16px;
-        max-width: calc(100% - 32px);
-        max-height: calc(100vh - 32px);
+      .field-ref-table tr:last-child td {
+        border-bottom: none;
       }
-      .modal-close {
-        font-size: 28px;
-        padding: 4px 8px;
+      .field-ref-table code {
+        background: var(--color-bg-tertiary);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
       }
-      .help-btn {
-        padding: 8px 12px;
+      .footer {
+        margin-top: 32px;
+        padding: 16px;
+        text-align: center;
         font-size: 13px;
+        color: var(--color-text-secondary);
+        border-top: 1px solid var(--color-border);
       }
-    }
-  </style>
-</head>
-<body>
-  <h1>🔐 SAML Response Decoder</h1>
-  <p class="privacy-notice">🔒 All decoding happens locally in your browser. No data is sent to any server.</p>
-  
-  <details class="help-section">
-    <summary>📖 How to capture a SAML Response</summary>
-    <div class="help-content">
-      <h3>Chrome / Edge</h3>
-      <ol>
-        <li>Open Developer Tools (<code>F12</code> or <code>Cmd+Option+I</code> on Mac)</li>
-        <li>Go to the <strong>Network</strong> tab</li>
-        <li>Check <strong>Preserve log</strong></li>
-        <li>Initiate the SAML login flow (sign in to the app)</li>
-        <li>Look for a POST request to a URL containing <code>/saml/consume</code> or <code>/acs</code></li>
-        <li>Click on the request, go to the <strong>Payload</strong> tab</li>
-        <li>Find the <code>SAMLResponse</code> parameter and copy its value</li>
-      </ol>
-      <h3>Firefox</h3>
-      <ol>
-        <li>Open Developer Tools (<code>F12</code> or <code>Cmd+Option+I</code> on Mac)</li>
-        <li>Go to the <strong>Network</strong> tab and check <strong>Persist Logs</strong></li>
-        <li>Initiate the SAML login flow</li>
-        <li>Look for the POST request to the ACS URL</li>
-        <li>Click on the request, go to the <strong>Request</strong> tab</li>
-        <li>Find and copy the <code>SAMLResponse</code> value</li>
-      </ol>
-      <h3>Browser Extensions</h3>
-      <ul>
-        <li><a href="https://addons.mozilla.org/en-US/firefox/addon/saml-tracer/" target="_blank" rel="noopener">SAML-tracer</a> (Firefox)</li>
-        <li><a href="https://chrome.google.com/webstore/detail/saml-chrome-panel/paijfdbeoenhembfhkhllainmocckace" target="_blank" rel="noopener">SAML Chrome Panel</a> (Chrome)</li>
-      </ul>
-    </div>
-  </details>
+      .footer a {
+        color: var(--color-accent);
+        text-decoration: none;
+      }
+      .footer a:hover {
+        text-decoration: underline;
+      }
+      .cert-details {
+        margin-top: 12px;
+      }
+      .cert-details summary {
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--color-accent);
+        user-select: none;
+      }
+      .cert-details summary:hover {
+        text-decoration: underline;
+      }
+      .cert-raw {
+        margin-top: 8px;
+        padding: 12px;
+        background: var(--color-bg-tertiary);
+        border-radius: 6px;
+        font-size: 11px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .xml-details {
+        margin-top: 0;
+      }
+      .xml-details summary {
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--color-accent);
+        user-select: none;
+      }
+      .xml-details summary:hover {
+        text-decoration: underline;
+      }
+      .xml-container {
+        position: relative;
+      }
+      .copy-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: var(--color-btn-dark);
+        color: var(--color-btn-text);
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        z-index: 1;
+      }
+      .copy-btn:hover {
+        background: var(--color-btn-dark-hover);
+      }
+      .copy-btn.copied {
+        background: var(--color-btn-primary);
+      }
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .xml-raw {
+        margin-top: 8px;
+        padding: 12px;
+        background: var(--color-bg-tertiary);
+        border-radius: 6px;
+        font-size: 11px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      /* Mobile responsive styles */
+      @media (max-width: 600px) {
+        body {
+          padding: 12px;
+        }
+        h1 {
+          font-size: 1.4em;
+        }
+        /* Table: stack rows on mobile */
+        .field-ref-table,
+        .field-ref-table thead,
+        .field-ref-table tbody,
+        .field-ref-table tr,
+        .field-ref-table th,
+        .field-ref-table td {
+          display: block;
+        }
+        .field-ref-table thead {
+          display: none;
+        }
+        .field-ref-table tr {
+          margin-bottom: 12px;
+          border: 1px solid var(--color-border);
+          border-radius: 6px;
+          overflow: hidden;
+        }
+        .field-ref-table td {
+          border-bottom: none;
+          padding: 10px 12px;
+        }
+        .field-ref-table td:first-child {
+          background: var(--color-bg-tertiary);
+          font-weight: 600;
+        }
+        /* Modal: full width on mobile */
+        .modal {
+          margin: 16px;
+          max-width: calc(100% - 32px);
+          max-height: calc(100vh - 32px);
+        }
+        .modal-close {
+          font-size: 28px;
+          padding: 4px 8px;
+        }
+        .help-btn {
+          padding: 8px 12px;
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <h1><span aria-hidden="true">🔐</span> SAML Response Decoder</h1>
+      <button
+        class="theme-toggle"
+        id="themeToggle"
+        type="button"
+        aria-label="Toggle colour theme"
+        aria-pressed="false"
+      >
+        <span class="icon-light" aria-hidden="true">☀️</span>
+        <span class="icon-dark" aria-hidden="true">🌙</span>
+      </button>
+      <script>
+        // Helper to sync theme toggle ARIA - defined early so both scripts can use it
+        function updateThemeToggleA11y(btn, theme) {
+          if (!btn || (theme !== 'light' && theme !== 'dark')) return
+          var isDark = theme === 'dark'
+          btn.setAttribute('aria-pressed', isDark ? 'true' : 'false')
+          btn.setAttribute(
+            'aria-label',
+            isDark ? 'Switch to light mode' : 'Switch to dark mode'
+          )
+        }
+        // Sync immediately after button is in DOM
+        ;(function () {
+          var btn = document.getElementById('themeToggle')
+          var theme = document.documentElement.getAttribute('data-theme')
+          updateThemeToggleA11y(btn, theme)
+        })()
+      </script>
+    </header>
+    <main>
+      <p class="privacy-notice">
+        <span aria-hidden="true">🔒</span> All decoding happens locally in your
+        browser. No data is sent to any server.
+      </p>
 
-  <div id="helpModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle" onclick="if(event.target === event.currentTarget) closeModal('helpModal')">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 id="helpModalTitle">📜 X.509 Certificate Fields</h2>
-        <button class="modal-close" aria-label="Close modal" onclick="closeModal('helpModal')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <table class="field-ref-table">
-          <thead>
-            <tr>
-              <th>Field</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>Issuer</code></td>
-              <td>The Certificate Authority (CA) or entity that issued this certificate. Shows the organisation that vouches for the certificate's authenticity.</td>
-            </tr>
-            <tr>
-              <td><code>Subject</code></td>
-              <td>The entity this certificate was issued to — typically the Identity Provider (IdP). This identifies who owns the certificate.</td>
-            </tr>
-            <tr>
-              <td><code>Valid From</code></td>
-              <td>The date/time when this certificate became valid. Shows <span style="color: var(--color-warning-text);">warning</span> if not yet valid.</td>
-            </tr>
-            <tr>
-              <td><code>Valid Until</code></td>
-              <td>The date/time when this certificate expires. Shows <span style="color: var(--color-error-text);">EXPIRED</span> if past this date. Certificate renewal required before expiry.</td>
-            </tr>
-            <tr>
-              <td><code>Signature Algorithm</code></td>
-              <td>The cryptographic algorithm used to sign this certificate (e.g., SHA256withRSA). Older algorithms like SHA1 may indicate security concerns.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+      <details class="help-section">
+        <summary>
+          <span aria-hidden="true">📖</span> How to capture a SAML Response
+        </summary>
+        <div class="help-content">
+          <h3>Chrome / Edge</h3>
+          <ol>
+            <li>
+              Open Developer Tools (<code>F12</code> or
+              <code>Cmd+Option+I</code> on Mac)
+            </li>
+            <li>Go to the <strong>Network</strong> tab</li>
+            <li>Check <strong>Preserve log</strong></li>
+            <li>Initiate the SAML login flow (sign in to the app)</li>
+            <li>
+              Look for a POST request to a URL containing
+              <code>/saml/consume</code> or <code>/acs</code>
+            </li>
+            <li>
+              Click on the request, go to the <strong>Payload</strong> tab
+            </li>
+            <li>
+              Find the <code>SAMLResponse</code> parameter and copy its value
+            </li>
+          </ol>
+          <h3>Firefox</h3>
+          <ol>
+            <li>
+              Open Developer Tools (<code>F12</code> or
+              <code>Cmd+Option+I</code> on Mac)
+            </li>
+            <li>
+              Go to the <strong>Network</strong> tab and check
+              <strong>Persist Logs</strong>
+            </li>
+            <li>Initiate the SAML login flow</li>
+            <li>Look for the POST request to the ACS URL</li>
+            <li>
+              Click on the request, go to the <strong>Request</strong> tab
+            </li>
+            <li>Find and copy the <code>SAMLResponse</code> value</li>
+          </ol>
+          <h3>Browser Extensions</h3>
+          <ul>
+            <li>
+              <a
+                href="https://addons.mozilla.org/en-US/firefox/addon/saml-tracer/"
+                target="_blank"
+                rel="noopener"
+                >SAML-tracer</a
+              >
+              (Firefox)
+            </li>
+            <li>
+              <a
+                href="https://chrome.google.com/webstore/detail/saml-chrome-panel/paijfdbeoenhembfhkhllainmocckace"
+                target="_blank"
+                rel="noopener"
+                >SAML Chrome Panel</a
+              >
+              (Chrome)
+            </li>
+          </ul>
+        </div>
+      </details>
 
-  <!-- SAML Assertion Help Modal -->
-  <div id="samlHelpModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="samlHelpModalTitle" onclick="if(event.target === event.currentTarget) closeModal('samlHelpModal')">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 id="samlHelpModalTitle">🎫 SAML Assertion Fields</h2>
-        <button class="modal-close" aria-label="Close modal" onclick="closeModal('samlHelpModal')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <table class="field-ref-table">
-          <thead>
-            <tr>
-              <th>Field</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>NameID Format</code></td>
-              <td>The format/type of the user identifier. Common formats include <code>emailAddress</code>, <code>persistent</code> (opaque ID), and <code>transient</code> (session-specific ID).</td>
-            </tr>
-            <tr>
-              <td><code>NameID Value</code></td>
-              <td>The unique identifier for the authenticated user. This is the value the Service Provider uses to identify the user (e.g., email address or username).</td>
-            </tr>
-            <tr>
-              <td><code>Issuer</code></td>
-              <td>The SAML Identity Provider (IdP) that issued this assertion. Usually the IdP's entity ID or URL.</td>
-            </tr>
-            <tr>
-              <td><code>Destination</code></td>
-              <td>The URL where this SAML response should be delivered — typically the Service Provider's Assertion Consumer Service (ACS) URL.</td>
-            </tr>
-            <tr>
-              <td><code>Not Before</code></td>
-              <td>The time at which this assertion becomes valid. The assertion cannot be used before this time. Shows <span style="color: var(--color-warning-text);">warning</span> if not yet valid.</td>
-            </tr>
-            <tr>
-              <td><code>Auth Instant</code></td>
-              <td>The exact moment the user authenticated with the IdP (e.g., entered their password). Useful for determining session freshness.</td>
-            </tr>
-            <tr>
-              <td><code>Not On Or After</code></td>
-              <td>The expiry time — the assertion cannot be used on or after this time. Shows <span style="color: var(--color-error-text);">EXPIRED</span> if past this date.</td>
-            </tr>
-            <tr>
-              <td><code>Session Expires</code></td>
-              <td>The time when the SSO session at the IdP expires (SessionNotOnOrAfter). This may differ from assertion expiry — shows how long the user's IdP session remains valid.</td>
-            </tr>
-            <tr>
-              <td><code>Status</code></td>
-              <td>Whether the SAML authentication was successful. <code>Success</code> means authentication succeeded; other values indicate errors.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- SAML Attributes Help Modal -->
-  <div id="attrHelpModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="attrHelpModalTitle" onclick="if(event.target === event.currentTarget) closeModal('attrHelpModal')">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 id="attrHelpModalTitle">🏷️ SAML Attributes</h2>
-        <button class="modal-close" aria-label="Close modal" onclick="closeModal('attrHelpModal')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p style="margin: 0 0 12px 0;">SAML attributes are additional user information passed from the Identity Provider to the Service Provider. Common attributes include:</p>
-        <table class="field-ref-table">
-          <thead>
-            <tr>
-              <th>Attribute</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>email</code></td>
-              <td>The user's email address.</td>
-            </tr>
-            <tr>
-              <td><code>firstName</code> / <code>givenName</code></td>
-              <td>The user's first/given name.</td>
-            </tr>
-            <tr>
-              <td><code>lastName</code> / <code>surname</code></td>
-              <td>The user's last name/surname.</td>
-            </tr>
-            <tr>
-              <td><code>displayName</code></td>
-              <td>The user's display name (often full name).</td>
-            </tr>
-            <tr>
-              <td><code>groups</code> / <code>memberOf</code></td>
-              <td>Group memberships for the user, often used for role-based access control.</td>
-            </tr>
-            <tr>
-              <td><code>department</code></td>
-              <td>The user's department within the organisation.</td>
-            </tr>
-          </tbody>
-        </table>
-        <p style="margin: 12px 0 0 0; font-size: 13px; color: var(--color-text-secondary);">Note: Actual attributes vary depending on IdP configuration and what the SP has requested.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="input-section">
-    <label for="samlInput">Paste Base64-encoded SAML Response:</label>
-    <textarea id="samlInput" placeholder="PD94bWwgdmVyc2lvbj0iMS4wIi..."></textarea>
-    <div style="margin-top: 12px;">
-      <button onclick="decode()">Decode</button>
-      <button class="secondary" onclick="clearAll()">Clear</button>
-    </div>
-  </div>
-
-  <div id="error" style="display: none;"></div>
-
-  <div id="results" class="results">
-    <div class="section" id="rawXmlSection" style="display: none;">
-      <div class="section-header">📄 Raw XML</div>
-      <div class="section-body">
-        <details class="xml-details">
-          <summary>View decoded SAML Response XML</summary>
-          <div class="xml-container">
-            <button class="copy-btn" id="copyBtn" aria-label="Copy XML to clipboard"><i class="fa-regular fa-copy"></i> Copy</button>
-            <span id="copyStatus" class="visually-hidden" aria-live="polite"></span>
-            <pre class="xml-raw" id="xmlRaw"></pre>
+      <div
+        id="helpModal"
+        class="modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="helpModalTitle"
+        onclick="if(event.target === event.currentTarget) closeModal('helpModal')"
+      >
+        <div class="modal">
+          <div class="modal-header">
+            <h2 id="helpModalTitle">
+              <span aria-hidden="true">📜</span> X.509 Certificate Fields
+            </h2>
+            <button
+              class="modal-close"
+              aria-label="Close modal"
+              onclick="closeModal('helpModal')"
+            >
+              &times;
+            </button>
           </div>
-        </details>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">
-        📜 X.509 Certificate
-        <button class="help-btn" aria-label="Help for X.509 Certificate fields" onclick="openModal('helpModal')">
-          <i class="fa-solid fa-circle-question"></i> Help
-        </button>
-      </div>
-      <div class="section-body">
-        <div class="field">
-          <div class="field-label" title="The Certificate Authority (CA) or entity that issued this certificate">Issuer</div>
-          <div class="field-value" id="certIssuer">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The entity this certificate was issued to (usually the IdP)">Subject</div>
-          <div class="field-value" id="certSubject">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The date/time when this certificate became valid">Valid From</div>
-          <div class="field-value" id="certNotBefore">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The date/time when this certificate expires — needs renewal before this date">Valid Until</div>
-          <div class="field-value" id="certNotAfter">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The cryptographic algorithm used to sign this certificate">Signature Algorithm</div>
-          <div class="field-value" id="certSigAlg">-</div>
-        </div>
-        <details class="cert-details" id="certDetails" style="display: none;">
-          <summary>View raw certificate (PEM)</summary>
-          <pre class="cert-raw" id="certRaw"></pre>
-        </details>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">
-        🎫 SAML Assertion
-        <button class="help-btn" aria-label="Help for SAML Assertion fields" onclick="openModal('samlHelpModal')">
-          <i class="fa-solid fa-circle-question"></i> Help
-        </button>
-      </div>
-      <div class="section-body">
-        <div class="field">
-          <div class="field-label" title="The format/type of the user identifier (e.g., email, persistent, transient)">NameID Format</div>
-          <div class="field-value" id="nameIdFormat">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The unique identifier for the authenticated user">NameID Value</div>
-          <div class="field-value" id="nameIdValue">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The SAML Identity Provider that issued this assertion">Issuer</div>
-          <div class="field-value" id="samlIssuer">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The URL where this SAML response should be delivered">Destination</div>
-          <div class="field-value" id="samlDestination">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The time at which this assertion becomes valid — assertion cannot be used before this time">Not Before</div>
-          <div class="field-value" id="notBefore">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The exact moment the user authenticated with the IdP (entered password, etc.)">Auth Instant</div>
-          <div class="field-value" id="authnInstant">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The expiry time — assertion cannot be used on or after this time">Not On Or After</div>
-          <div class="field-value" id="notOnOrAfter">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="The time when the SSO session at the IdP expires — may differ from assertion expiry">Session Expires</div>
-          <div class="field-value" id="sessionNotOnOrAfter">-</div>
-        </div>
-        <div class="field">
-          <div class="field-label" title="Whether the SAML authentication was successful">Status</div>
-          <div class="field-value" id="samlStatus">-</div>
+          <div class="modal-body">
+            <table class="field-ref-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>Issuer</code></td>
+                  <td>
+                    The Certificate Authority (CA) or entity that issued this
+                    certificate. Shows the organisation that vouches for the
+                    certificate's authenticity.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Subject</code></td>
+                  <td>
+                    The entity this certificate was issued to — typically the
+                    Identity Provider (IdP). This identifies who owns the
+                    certificate.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Valid From</code></td>
+                  <td>
+                    The date/time when this certificate became valid. Shows
+                    <span style="color: var(--color-warning-text)"
+                      >warning</span
+                    >
+                    if not yet valid.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Valid Until</code></td>
+                  <td>
+                    The date/time when this certificate expires. Shows
+                    <span style="color: var(--color-error-text)">EXPIRED</span>
+                    if past this date. Certificate renewal required before
+                    expiry.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Signature Algorithm</code></td>
+                  <td>
+                    The cryptographic algorithm used to sign this certificate
+                    (e.g., SHA256withRSA). Older algorithms like SHA1 may
+                    indicate security concerns.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="section" id="attributesSection" style="display: none;">
-      <div class="section-header">
-        🏷️ SAML Attributes
-        <button class="help-btn" aria-label="Help for SAML Attributes" onclick="openModal('attrHelpModal')">
-          <i class="fa-solid fa-circle-question"></i> Help
-        </button>
+      <!-- SAML Assertion Help Modal -->
+      <div
+        id="samlHelpModal"
+        class="modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="samlHelpModalTitle"
+        onclick="if(event.target === event.currentTarget) closeModal('samlHelpModal')"
+      >
+        <div class="modal">
+          <div class="modal-header">
+            <h2 id="samlHelpModalTitle">
+              <span aria-hidden="true">🎫</span> SAML Assertion Fields
+            </h2>
+            <button
+              class="modal-close"
+              aria-label="Close modal"
+              onclick="closeModal('samlHelpModal')"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="modal-body">
+            <table class="field-ref-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>NameID Format</code></td>
+                  <td>
+                    The format/type of the user identifier. Common formats
+                    include
+                    <code>emailAddress</code>, <code>persistent</code> (opaque
+                    ID), and <code>transient</code> (session-specific ID).
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>NameID Value</code></td>
+                  <td>
+                    The unique identifier for the authenticated user. This is
+                    the value the Service Provider uses to identify the user
+                    (e.g., email address or username).
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Issuer</code></td>
+                  <td>
+                    The SAML Identity Provider (IdP) that issued this assertion.
+                    Usually the IdP's entity ID or URL.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Destination</code></td>
+                  <td>
+                    The URL where this SAML response should be delivered —
+                    typically the Service Provider's Assertion Consumer Service
+                    (ACS) URL.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Not Before</code></td>
+                  <td>
+                    The time at which this assertion becomes valid. The
+                    assertion cannot be used before this time. Shows
+                    <span style="color: var(--color-warning-text)"
+                      >warning</span
+                    >
+                    if not yet valid.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Auth Instant</code></td>
+                  <td>
+                    The exact moment the user authenticated with the IdP (e.g.,
+                    entered their password). Useful for determining session
+                    freshness.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Not On Or After</code></td>
+                  <td>
+                    The expiry time — the assertion cannot be used on or after
+                    this time. Shows
+                    <span style="color: var(--color-error-text)">EXPIRED</span>
+                    if past this date.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Session Expires</code></td>
+                  <td>
+                    The time when the SSO session at the IdP expires
+                    (SessionNotOnOrAfter). This may differ from assertion expiry
+                    — shows how long the user's IdP session remains valid.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Status</code></td>
+                  <td>
+                    Whether the SAML authentication was successful.
+                    <code>Success</code> means authentication succeeded; other
+                    values indicate errors.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="section-body" id="attributesBody">
+
+      <!-- SAML Attributes Help Modal -->
+      <div
+        id="attrHelpModal"
+        class="modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="attrHelpModalTitle"
+        onclick="if(event.target === event.currentTarget) closeModal('attrHelpModal')"
+      >
+        <div class="modal">
+          <div class="modal-header">
+            <h2 id="attrHelpModalTitle">
+              <span aria-hidden="true">🏷️</span> SAML Attributes
+            </h2>
+            <button
+              class="modal-close"
+              aria-label="Close modal"
+              onclick="closeModal('attrHelpModal')"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="modal-body">
+            <p style="margin: 0 0 12px 0">
+              SAML attributes are additional user information passed from the
+              Identity Provider to the Service Provider. Common attributes
+              include:
+            </p>
+            <table class="field-ref-table">
+              <thead>
+                <tr>
+                  <th>Attribute</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>email</code></td>
+                  <td>The user's email address.</td>
+                </tr>
+                <tr>
+                  <td><code>firstName</code> / <code>givenName</code></td>
+                  <td>The user's first/given name.</td>
+                </tr>
+                <tr>
+                  <td><code>lastName</code> / <code>surname</code></td>
+                  <td>The user's last name/surname.</td>
+                </tr>
+                <tr>
+                  <td><code>displayName</code></td>
+                  <td>The user's display name (often full name).</td>
+                </tr>
+                <tr>
+                  <td><code>groups</code> / <code>memberOf</code></td>
+                  <td>
+                    Group memberships for the user, often used for role-based
+                    access control.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>department</code></td>
+                  <td>The user's department within the organisation.</td>
+                </tr>
+              </tbody>
+            </table>
+            <p
+              style="
+                margin: 12px 0 0 0;
+                font-size: 13px;
+                color: var(--color-text-secondary);
+              "
+            >
+              Note: Actual attributes vary depending on IdP configuration and
+              what the SP has requested.
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <footer class="footer">
-    Built by <a href="https://github.com/jusuchin85" target="_blank" rel="noopener">@jusuchin85</a> · 2026 · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> · <a href="https://github.com/jusuchin85/samlresponse-decoder" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> Source</a> · <a href="https://github.com/jusuchin85/samlresponse-decoder/issues/new" target="_blank" rel="noopener">Report issue</a>
-  </footer>
+      <div class="input-section">
+        <label for="samlInput">Paste Base64-encoded SAML Response:</label>
+        <textarea
+          id="samlInput"
+          placeholder="PD94bWwgdmVyc2lvbj0iMS4wIi..."
+        ></textarea>
+        <div style="margin-top: 12px">
+          <button onclick="decode()">Decode</button>
+          <button class="secondary" onclick="clearAll()">Clear</button>
+        </div>
+      </div>
 
-  <script>
-    // OID mappings for X.509 certificate parsing
-    const OID_MAP = {
-      '2.5.4.6': 'C',
-      '2.5.4.8': 'ST',
-      '2.5.4.7': 'L',
-      '2.5.4.10': 'O',
-      '2.5.4.11': 'OU',
-      '2.5.4.3': 'CN',
-      '1.2.840.113549.1.9.1': 'emailAddress'
-    };
+      <div id="error" role="alert" style="display: none"></div>
 
-    const SIG_ALG_MAP = {
-      '1.2.840.113549.1.1.5': 'sha1WithRSAEncryption',
-      '1.2.840.113549.1.1.11': 'sha256WithRSAEncryption',
-      '1.2.840.113549.1.1.12': 'sha384WithRSAEncryption',
-      '1.2.840.113549.1.1.13': 'sha512WithRSAEncryption',
-      '1.2.840.10045.4.3.2': 'ecdsa-with-SHA256',
-      '1.2.840.10045.4.3.3': 'ecdsa-with-SHA384',
-      '1.2.840.10045.4.3.4': 'ecdsa-with-SHA512'
-    };
+      <div id="results" class="results">
+        <div class="section" id="rawXmlSection" style="display: none">
+          <div class="section-header">
+            <span aria-hidden="true">📄</span> Raw XML
+          </div>
+          <div class="section-body">
+            <details class="xml-details">
+              <summary>View decoded SAML Response XML</summary>
+              <div class="xml-container">
+                <button
+                  class="copy-btn"
+                  id="copyBtn"
+                  aria-label="Copy XML to clipboard"
+                >
+                  <i class="fa-regular fa-copy" aria-hidden="true"></i> Copy
+                </button>
+                <span
+                  id="copyStatus"
+                  class="visually-hidden"
+                  aria-live="polite"
+                ></span>
+                <pre class="xml-raw" id="xmlRaw"></pre>
+              </div>
+            </details>
+          </div>
+        </div>
 
-    // Modal helper functions
-    let lastFocusedElement = null;
+        <div class="section">
+          <div class="section-header">
+            <span aria-hidden="true">📜</span> X.509 Certificate
+            <button
+              class="help-btn"
+              aria-label="Help for X.509 Certificate fields"
+              onclick="openModal('helpModal')"
+            >
+              <i class="fa-solid fa-circle-question"></i> Help
+            </button>
+          </div>
+          <div class="section-body">
+            <div class="field">
+              <div
+                class="field-label"
+                title="The Certificate Authority (CA) or entity that issued this certificate"
+              >
+                Issuer
+              </div>
+              <div class="field-value" id="certIssuer">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The entity this certificate was issued to (usually the IdP)"
+              >
+                Subject
+              </div>
+              <div class="field-value" id="certSubject">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The date/time when this certificate became valid"
+              >
+                Valid From
+              </div>
+              <div class="field-value" id="certNotBefore">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The date/time when this certificate expires — needs renewal before this date"
+              >
+                Valid Until
+              </div>
+              <div class="field-value" id="certNotAfter">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The cryptographic algorithm used to sign this certificate"
+              >
+                Signature Algorithm
+              </div>
+              <div class="field-value" id="certSigAlg">-</div>
+            </div>
+            <details
+              class="cert-details"
+              id="certDetails"
+              style="display: none"
+            >
+              <summary>View raw certificate (PEM)</summary>
+              <pre class="cert-raw" id="certRaw"></pre>
+            </details>
+          </div>
+        </div>
 
-    function openModal(modalId) {
-      lastFocusedElement = document.activeElement;
-      const modal = document.getElementById(modalId);
-      modal.classList.add('show');
-      // Focus the close button
-      const closeBtn = modal.querySelector('.modal-close');
-      if (closeBtn) {
-        closeBtn.focus();
+        <div class="section">
+          <div class="section-header">
+            <span aria-hidden="true">🎫</span> SAML Assertion
+            <button
+              class="help-btn"
+              aria-label="Help for SAML Assertion fields"
+              onclick="openModal('samlHelpModal')"
+            >
+              <i class="fa-solid fa-circle-question"></i> Help
+            </button>
+          </div>
+          <div class="section-body">
+            <div class="field">
+              <div
+                class="field-label"
+                title="The format/type of the user identifier (e.g., email, persistent, transient)"
+              >
+                NameID Format
+              </div>
+              <div class="field-value" id="nameIdFormat">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The unique identifier for the authenticated user"
+              >
+                NameID Value
+              </div>
+              <div class="field-value" id="nameIdValue">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The SAML Identity Provider that issued this assertion"
+              >
+                Issuer
+              </div>
+              <div class="field-value" id="samlIssuer">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The URL where this SAML response should be delivered"
+              >
+                Destination
+              </div>
+              <div class="field-value" id="samlDestination">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The time at which this assertion becomes valid — assertion cannot be used before this time"
+              >
+                Not Before
+              </div>
+              <div class="field-value" id="notBefore">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The exact moment the user authenticated with the IdP (entered password, etc.)"
+              >
+                Auth Instant
+              </div>
+              <div class="field-value" id="authnInstant">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The expiry time — assertion cannot be used on or after this time"
+              >
+                Not On Or After
+              </div>
+              <div class="field-value" id="notOnOrAfter">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="The time when the SSO session at the IdP expires — may differ from assertion expiry"
+              >
+                Session Expires
+              </div>
+              <div class="field-value" id="sessionNotOnOrAfter">-</div>
+            </div>
+            <div class="field">
+              <div
+                class="field-label"
+                title="Whether the SAML authentication was successful"
+              >
+                Status
+              </div>
+              <div class="field-value" id="samlStatus">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section" id="attributesSection" style="display: none">
+          <div class="section-header">
+            <span aria-hidden="true">🏷️</span> SAML Attributes
+            <button
+              class="help-btn"
+              aria-label="Help for SAML Attributes"
+              onclick="openModal('attrHelpModal')"
+            >
+              <i class="fa-solid fa-circle-question"></i> Help
+            </button>
+          </div>
+          <div class="section-body" id="attributesBody"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      Built by
+      <a href="https://github.com/jusuchin85" target="_blank" rel="noopener"
+        >@jusuchin85</a
+      >
+      · 2026 · Hosted on
+      <a href="https://pages.github.com" target="_blank" rel="noopener"
+        >GitHub Pages</a
+      >
+      ·
+      <a
+        href="https://github.com/jusuchin85/samlresponse-decoder"
+        target="_blank"
+        rel="noopener"
+        ><i class="fa-brands fa-github" aria-hidden="true"></i> Source</a
+      >
+      ·
+      <a
+        href="https://github.com/jusuchin85/samlresponse-decoder/issues/new"
+        target="_blank"
+        rel="noopener"
+        >Report issue</a
+      >
+    </footer>
+
+    <script>
+      // Theme toggle handler - uses updateThemeToggleA11y defined in header script
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme')
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark'
+        document.documentElement.setAttribute('data-theme', newTheme)
+        try {
+          localStorage.setItem('samlresponse-decoder:theme', newTheme)
+        } catch (e) {
+          // localStorage unavailable
+        }
+        updateThemeToggleA11y(DOM.themeToggle, newTheme)
       }
-    }
 
-    function closeModal(modalId) {
-      document.getElementById(modalId).classList.remove('show');
-      // Return focus to the element that opened the modal
-      if (lastFocusedElement) {
-        lastFocusedElement.focus();
-        lastFocusedElement = null;
-      }
-    }
-
-    // Close modal on Escape key and trap focus
-    document.addEventListener('keydown', function(event) {
-      const visibleModal = document.querySelector('.modal-overlay.show');
-      if (!visibleModal) return;
-
-      if (event.key === 'Escape') {
-        closeModal(visibleModal.id);
-        return;
+      // OID mappings for X.509 certificate parsing
+      const OID_MAP = {
+        '2.5.4.6': 'C',
+        '2.5.4.8': 'ST',
+        '2.5.4.7': 'L',
+        '2.5.4.10': 'O',
+        '2.5.4.11': 'OU',
+        '2.5.4.3': 'CN',
+        '1.2.840.113549.1.9.1': 'emailAddress'
       }
 
-      // Focus trap: cycle through focusable elements within modal
-      if (event.key === 'Tab') {
-        const focusableElements = visibleModal.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        if (focusableElements.length === 0) return;
-        
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-        const focusableArray = Array.prototype.slice.call(focusableElements);
-        const activeElement = document.activeElement;
-        const isActiveInside = activeElement && 
-          visibleModal.contains(activeElement) && 
-          focusableArray.indexOf(activeElement) !== -1;
+      const SIG_ALG_MAP = {
+        '1.2.840.113549.1.1.5': 'sha1WithRSAEncryption',
+        '1.2.840.113549.1.1.11': 'sha256WithRSAEncryption',
+        '1.2.840.113549.1.1.12': 'sha384WithRSAEncryption',
+        '1.2.840.113549.1.1.13': 'sha512WithRSAEncryption',
+        '1.2.840.10045.4.3.2': 'ecdsa-with-SHA256',
+        '1.2.840.10045.4.3.3': 'ecdsa-with-SHA384',
+        '1.2.840.10045.4.3.4': 'ecdsa-with-SHA512'
+      }
 
-        if (event.shiftKey) {
-          // Shift+Tab: if focus outside or on first element, go to last
-          if (!isActiveInside || activeElement === firstElement) {
-            event.preventDefault();
-            lastElement.focus();
+      // Modal helper functions
+      let lastFocusedElement = null
+
+      function openModal(modalId) {
+        lastFocusedElement = document.activeElement
+        const modal = document.getElementById(modalId)
+        modal.classList.add('show')
+        // Focus the close button
+        const closeBtn = modal.querySelector('.modal-close')
+        if (closeBtn) {
+          closeBtn.focus()
+        }
+      }
+
+      function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('show')
+        // Return focus to the element that opened the modal
+        if (lastFocusedElement) {
+          lastFocusedElement.focus()
+          lastFocusedElement = null
+        }
+      }
+
+      // Close modal on Escape key and trap focus
+      document.addEventListener('keydown', function (event) {
+        const visibleModal = document.querySelector('.modal-overlay.show')
+        if (!visibleModal) return
+
+        if (event.key === 'Escape') {
+          closeModal(visibleModal.id)
+          return
+        }
+
+        // Focus trap: cycle through focusable elements within modal
+        if (event.key === 'Tab') {
+          const focusableElements = visibleModal.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          )
+          if (focusableElements.length === 0) return
+
+          const firstElement = focusableElements[0]
+          const lastElement = focusableElements[focusableElements.length - 1]
+          const focusableArray = Array.prototype.slice.call(focusableElements)
+          const activeElement = document.activeElement
+          const isActiveInside =
+            activeElement &&
+            visibleModal.contains(activeElement) &&
+            focusableArray.indexOf(activeElement) !== -1
+
+          if (event.shiftKey) {
+            // Shift+Tab: if focus outside or on first element, go to last
+            if (!isActiveInside || activeElement === firstElement) {
+              event.preventDefault()
+              lastElement.focus()
+            }
+          } else {
+            // Tab: if focus outside or on last element, go to first
+            if (!isActiveInside || activeElement === lastElement) {
+              event.preventDefault()
+              firstElement.focus()
+            }
           }
-        } else {
-          // Tab: if focus outside or on last element, go to first
-          if (!isActiveInside || activeElement === lastElement) {
-            event.preventDefault();
-            firstElement.focus();
+        }
+      })
+
+      // DOM element cache
+      const DOM = {
+        samlInput: document.getElementById('samlInput'),
+        error: document.getElementById('error'),
+        results: document.getElementById('results'),
+        copyBtn: document.getElementById('copyBtn'),
+        copyStatus: document.getElementById('copyStatus'),
+        xmlRaw: document.getElementById('xmlRaw'),
+        rawXmlSection: document.getElementById('rawXmlSection'),
+        certRaw: document.getElementById('certRaw'),
+        certDetails: document.getElementById('certDetails'),
+        certIssuer: document.getElementById('certIssuer'),
+        certNotBefore: document.getElementById('certNotBefore'),
+        certNotAfter: document.getElementById('certNotAfter'),
+        certSubject: document.getElementById('certSubject'),
+        certSigAlg: document.getElementById('certSigAlg'),
+        nameIdFormat: document.getElementById('nameIdFormat'),
+        nameIdValue: document.getElementById('nameIdValue'),
+        samlIssuer: document.getElementById('samlIssuer'),
+        samlDestination: document.getElementById('samlDestination'),
+        notBefore: document.getElementById('notBefore'),
+        authnInstant: document.getElementById('authnInstant'),
+        notOnOrAfter: document.getElementById('notOnOrAfter'),
+        sessionNotOnOrAfter: document.getElementById('sessionNotOnOrAfter'),
+        samlStatus: document.getElementById('samlStatus'),
+        attributesSection: document.getElementById('attributesSection'),
+        attributesBody: document.getElementById('attributesBody'),
+        themeToggle: document.getElementById('themeToggle')
+      }
+
+      /**
+       * Set field status with value and optional status class
+       * @param {HTMLElement} element - The field element to update
+       * @param {string} value - The text value to display
+       * @param {string|null} status - Status class: 'valid', 'warning', 'expired', 'error', or null
+       * @param {string|null} suffix - Optional suffix to append (e.g., ' (EXPIRED)')
+       */
+      function setFieldStatus(element, value, status, suffix) {
+        element.classList.remove('valid', 'warning', 'expired', 'error')
+        element.textContent = value + (suffix || '')
+        if (status) {
+          element.classList.add(status)
+        }
+      }
+
+      /**
+       * Reset all result-related UI state so a new decode starts clean.
+       * Clears field values/status classes and hides optional sections.
+       */
+      function resetResults() {
+        DOM.error.style.display = 'none'
+        DOM.results.classList.remove('show')
+
+        // Clear all field values and status classes
+        const fields = document.querySelectorAll('.field-value')
+        fields.forEach(function (f) {
+          f.textContent = '-'
+          f.classList.remove('valid', 'expired', 'warning', 'error')
+        })
+
+        // Clear and hide attributes section
+        DOM.attributesBody.innerHTML = ''
+        DOM.attributesSection.style.display = 'none'
+
+        // Clear and hide certificate raw section
+        DOM.certRaw.textContent = ''
+        DOM.certDetails.style.display = 'none'
+
+        // Clear and hide raw XML section
+        DOM.xmlRaw.textContent = ''
+        DOM.rawXmlSection.style.display = 'none'
+
+        // Close all <details> elements within the results
+        const detailsElements = document.querySelectorAll('#results details')
+        detailsElements.forEach(function (d) {
+          d.removeAttribute('open')
+        })
+
+        // Clear any pending copy timeout and invalidate pending clipboard callbacks
+        if (copyTimeoutId) {
+          clearTimeout(copyTimeoutId)
+          copyTimeoutId = null
+        }
+        copyRequestId++
+        DOM.copyBtn.innerHTML =
+          '<i class="fa-regular fa-copy" aria-hidden="true"></i> Copy'
+        DOM.copyBtn.classList.remove('copied')
+        DOM.copyStatus.textContent = ''
+      }
+
+      function decode() {
+        // Reset previous results so stale values don't persist
+        resetResults()
+
+        const input = DOM.samlInput.value.trim()
+
+        if (!input) {
+          showError('Please enter a SAML Response')
+          return
+        }
+
+        try {
+          // Decode base64
+          const xmlString = atob(input)
+
+          // Parse XML
+          const parser = new DOMParser()
+          const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
+
+          // Check for parse errors
+          const parseError = xmlDoc.querySelector('parsererror')
+          if (parseError) {
+            throw new Error('Invalid XML: ' + parseError.textContent)
           }
+
+          // Extract certificate
+          const certElement = xmlDoc.querySelector('X509Certificate')
+          if (certElement) {
+            const certBase64 = certElement.textContent.replace(/\s/g, '')
+            parseCertificate(certBase64)
+            displayRawCertificate(certBase64)
+          }
+
+          // Extract SAML info
+          extractSamlInfo(xmlDoc)
+
+          // Display raw XML
+          displayRawXml(xmlString)
+
+          DOM.results.classList.add('show')
+        } catch (e) {
+          showError('Failed to decode: ' + e.message)
         }
       }
-    });
 
-    // DOM element cache
-    const DOM = {
-      samlInput: document.getElementById('samlInput'),
-      error: document.getElementById('error'),
-      results: document.getElementById('results'),
-      copyBtn: document.getElementById('copyBtn'),
-      copyStatus: document.getElementById('copyStatus'),
-      xmlRaw: document.getElementById('xmlRaw'),
-      rawXmlSection: document.getElementById('rawXmlSection'),
-      certRaw: document.getElementById('certRaw'),
-      certDetails: document.getElementById('certDetails'),
-      certIssuer: document.getElementById('certIssuer'),
-      certNotBefore: document.getElementById('certNotBefore'),
-      certNotAfter: document.getElementById('certNotAfter'),
-      certSubject: document.getElementById('certSubject'),
-      certSigAlg: document.getElementById('certSigAlg'),
-      nameIdFormat: document.getElementById('nameIdFormat'),
-      nameIdValue: document.getElementById('nameIdValue'),
-      samlIssuer: document.getElementById('samlIssuer'),
-      samlDestination: document.getElementById('samlDestination'),
-      notBefore: document.getElementById('notBefore'),
-      authnInstant: document.getElementById('authnInstant'),
-      notOnOrAfter: document.getElementById('notOnOrAfter'),
-      sessionNotOnOrAfter: document.getElementById('sessionNotOnOrAfter'),
-      samlStatus: document.getElementById('samlStatus'),
-      attributesSection: document.getElementById('attributesSection'),
-      attributesBody: document.getElementById('attributesBody')
-    };
-
-    /**
-     * Set field status with value and optional status class
-     * @param {HTMLElement} element - The field element to update
-     * @param {string} value - The text value to display
-     * @param {string|null} status - Status class: 'valid', 'warning', 'expired', 'error', or null
-     * @param {string|null} suffix - Optional suffix to append (e.g., ' (EXPIRED)')
-     */
-    function setFieldStatus(element, value, status, suffix) {
-      element.classList.remove('valid', 'warning', 'expired', 'error');
-      element.textContent = value + (suffix || '');
-      if (status) {
-        element.classList.add(status);
-      }
-    }
-
-    function decode() {
-      const input = DOM.samlInput.value.trim();
-      
-      DOM.error.style.display = 'none';
-      DOM.results.classList.remove('show');
-
-      if (!input) {
-        showError('Please enter a SAML Response');
-        return;
+      function showError(message) {
+        DOM.error.textContent = message
+        DOM.error.style.display = 'block'
       }
 
-      try {
-        // Decode base64
-        const xmlString = atob(input);
-        
-        // Parse XML
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
-        
-        // Check for parse errors
-        const parseError = xmlDoc.querySelector('parsererror');
-        if (parseError) {
-          throw new Error('Invalid XML: ' + parseError.textContent);
+      function formatUTC(date) {
+        if (isNaN(date.getTime())) {
+          return 'Invalid Date'
+        }
+        return date.toUTCString().replace('GMT', 'UTC')
+      }
+
+      function displayRawCertificate(base64Cert) {
+        // Format as PEM
+        const pemLines = ['-----BEGIN CERTIFICATE-----']
+        for (let i = 0; i < base64Cert.length; i += 64) {
+          pemLines.push(base64Cert.substring(i, i + 64))
+        }
+        pemLines.push('-----END CERTIFICATE-----')
+
+        DOM.certRaw.textContent = pemLines.join('\n')
+        DOM.certDetails.style.display = 'block'
+      }
+
+      function displayRawXml(xmlString) {
+        // Pretty print XML
+        const formatted = formatXml(xmlString)
+        DOM.xmlRaw.textContent = formatted
+        DOM.rawXmlSection.style.display = 'block'
+        // Reset details state to closed on new decode
+        document
+          .querySelector('#rawXmlSection .xml-details')
+          .removeAttribute('open')
+      }
+
+      function formatXml(xml) {
+        if (!xml || xml.length < 3) {
+          return xml || ''
         }
 
-        // Extract certificate
-        const certElement = xmlDoc.querySelector('X509Certificate');
-        if (certElement) {
-          const certBase64 = certElement.textContent.replace(/\s/g, '');
-          parseCertificate(certBase64);
-          displayRawCertificate(certBase64);
-        }
+        try {
+          const parser = new DOMParser()
+          const doc = parser.parseFromString(xml, 'application/xml')
 
-        // Extract SAML info
-        extractSamlInfo(xmlDoc);
+          // If the XML is not well-formed, DOMParser will create a parsererror element
+          const parseError = doc.getElementsByTagName('parsererror')[0]
+          if (parseError) {
+            // Fall back to the original string if parsing fails
+            return xml
+          }
 
-        // Display raw XML
-        displayRawXml(xmlString);
+          const indentUnit = '  '
 
-        DOM.results.classList.add('show');
-      } catch (e) {
-        showError('Failed to decode: ' + e.message);
-      }
-    }
+          function serializeNode(node, depth) {
+            const indent = indentUnit.repeat(depth)
+            let output = ''
 
-    function showError(message) {
-      DOM.error.textContent = message;
-      DOM.error.style.display = 'block';
-    }
-
-    function formatUTC(date) {
-      if (isNaN(date.getTime())) {
-        return 'Invalid Date';
-      }
-      return date.toUTCString().replace('GMT', 'UTC');
-    }
-
-    function displayRawCertificate(base64Cert) {
-      // Format as PEM
-      const pemLines = ['-----BEGIN CERTIFICATE-----'];
-      for (let i = 0; i < base64Cert.length; i += 64) {
-        pemLines.push(base64Cert.substring(i, i + 64));
-      }
-      pemLines.push('-----END CERTIFICATE-----');
-      
-      DOM.certRaw.textContent = pemLines.join('\n');
-      DOM.certDetails.style.display = 'block';
-    }
-
-    function displayRawXml(xmlString) {
-      // Pretty print XML
-      const formatted = formatXml(xmlString);
-      DOM.xmlRaw.textContent = formatted;
-      DOM.rawXmlSection.style.display = 'block';
-      // Reset details state to closed on new decode
-      document.querySelector('#rawXmlSection .xml-details').removeAttribute('open');
-    }
-
-    function formatXml(xml) {
-      if (!xml || xml.length < 3) {
-        return xml || '';
-      }
-
-      try {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(xml, 'application/xml');
-
-        // If the XML is not well-formed, DOMParser will create a parsererror element
-        const parseError = doc.getElementsByTagName('parsererror')[0];
-        if (parseError) {
-          // Fall back to the original string if parsing fails
-          return xml;
-        }
-
-        const indentUnit = '  ';
-
-        function serializeNode(node, depth) {
-          const indent = indentUnit.repeat(depth);
-          let output = '';
-
-          switch (node.nodeType) {
-            case Node.ELEMENT_NODE: {
-              let tagOpen = '<' + node.nodeName;
-              for (let i = 0; i < node.attributes.length; i++) {
-                const attr = node.attributes[i];
-                const escapedValue = attr.value
-                  .replace(/&/g, '&amp;')
-                  .replace(/"/g, '&quot;')
-                  .replace(/</g, '&lt;')
-                  .replace(/>/g, '&gt;')
-                  .replace(/'/g, '&apos;');
-                tagOpen += ' ' + attr.name + '="' + escapedValue + '"';
-              }
-
-              const children = Array.prototype.slice.call(node.childNodes || []);
-              if (children.length === 0) {
-                // Self-closing tag for empty elements
-                output += indent + tagOpen + '/>\n';
-              } else {
-                // Determine if there is any element child (for newline placement)
-                const hasElementChild = children.some(function(child) {
-                  return child.nodeType === Node.ELEMENT_NODE;
-                });
-
-                output += indent + tagOpen + '>';
-                if (hasElementChild) {
-                  output += '\n';
+            switch (node.nodeType) {
+              case Node.ELEMENT_NODE: {
+                let tagOpen = '<' + node.nodeName
+                for (let i = 0; i < node.attributes.length; i++) {
+                  const attr = node.attributes[i]
+                  const escapedValue = attr.value
+                    .replace(/&/g, '&amp;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/'/g, '&apos;')
+                  tagOpen += ' ' + attr.name + '="' + escapedValue + '"'
                 }
 
-                children.forEach(function(child) {
-                  const childText = serializeNode(child, depth + 1);
-                  if (childText) {
-                    output += childText;
+                const children = Array.prototype.slice.call(
+                  node.childNodes || []
+                )
+                if (children.length === 0) {
+                  // Self-closing tag for empty elements
+                  output += indent + tagOpen + '/>\n'
+                } else {
+                  // Determine if there is any element child (for newline placement)
+                  const hasElementChild = children.some(function (child) {
+                    return child.nodeType === Node.ELEMENT_NODE
+                  })
+
+                  output += indent + tagOpen + '>'
+                  if (hasElementChild) {
+                    output += '\n'
                   }
-                });
 
-                if (hasElementChild) {
-                  output += indent;
+                  children.forEach(function (child) {
+                    const childText = serializeNode(child, depth + 1)
+                    if (childText) {
+                      output += childText
+                    }
+                  })
+
+                  if (hasElementChild) {
+                    output += indent
+                  }
+                  output += '</' + node.nodeName + '>\n'
                 }
-                output += '</' + node.nodeName + '>\n';
+                break
               }
-              break;
-            }
-            case Node.TEXT_NODE: {
-              const text = node.nodeValue;
-              if (text && text.trim() !== '') {
-                const escapedText = text.trim()
-                  .replace(/&/g, '&amp;')
-                  .replace(/</g, '&lt;')
-                  .replace(/>/g, '&gt;');
-                output += escapedText;
+              case Node.TEXT_NODE: {
+                const text = node.nodeValue
+                if (text && text.trim() !== '') {
+                  const escapedText = text
+                    .trim()
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                  output += escapedText
+                }
+                break
               }
-              break;
-            }
-            case Node.CDATA_SECTION_NODE: {
-              const safeCdata = String(node.nodeValue || '').replace(/]]>/g, ']]]]><![CDATA[>');
-              output += indent + '<![CDATA[' + safeCdata + ']]>\n';
-              break;
-            }
-            case Node.COMMENT_NODE: {
-              let commentText = node.nodeValue || '';
-              // XML comments must not contain "--" and must not end with "-"
-              commentText = commentText.replace(/--/g, '- -');
-              if (commentText.endsWith('-')) {
-                commentText += ' ';
+              case Node.CDATA_SECTION_NODE: {
+                const safeCdata = String(node.nodeValue || '').replace(
+                  /]]>/g,
+                  ']]]]><![CDATA[>'
+                )
+                output += indent + '<![CDATA[' + safeCdata + ']]>\n'
+                break
               }
-              output += indent + '<!--' + commentText + '-->\n';
-              break;
-            }
-            case Node.DOCUMENT_NODE:
-            case Node.DOCUMENT_FRAGMENT_NODE: {
-              Array.prototype.forEach.call(node.childNodes, function(child) {
-                output += serializeNode(child, depth);
-              });
-              break;
-            }
-            case Node.PROCESSING_INSTRUCTION_NODE: {
-              const target = node.target || '';
-              const data = node.nodeValue || '';
-              if (target) {
-                const content = data ? ' ' + data : '';
-                output += indent + '<?' + target + content + '?>\n';
+              case Node.COMMENT_NODE: {
+                let commentText = node.nodeValue || ''
+                // XML comments must not contain "--" and must not end with "-"
+                commentText = commentText.replace(/--/g, '- -')
+                if (commentText.endsWith('-')) {
+                  commentText += ' '
+                }
+                output += indent + '<!--' + commentText + '-->\n'
+                break
               }
-              break;
+              case Node.DOCUMENT_NODE:
+              case Node.DOCUMENT_FRAGMENT_NODE: {
+                Array.prototype.forEach.call(node.childNodes, function (child) {
+                  output += serializeNode(child, depth)
+                })
+                break
+              }
+              case Node.PROCESSING_INSTRUCTION_NODE: {
+                const target = node.target || ''
+                const data = node.nodeValue || ''
+                if (target) {
+                  const content = data ? ' ' + data : ''
+                  output += indent + '<?' + target + content + '?>\n'
+                }
+                break
+              }
+              default:
+                break
             }
-            default:
-              break;
+
+            return output
           }
 
-          return output;
-        }
-
-        return serializeNode(doc, 0).trim();
-      } catch (e) {
-        // In case of any unexpected error, return the original XML
-        return xml;
-      }
-    }
-
-    let copyTimeoutId = null;
-    
-    function copyXml() {
-      const xmlContent = DOM.xmlRaw.textContent;
-
-      // Clear any pending timeout
-      if (copyTimeoutId) {
-        clearTimeout(copyTimeoutId);
-        copyTimeoutId = null;
-      }
-
-      // Check if Clipboard API is available
-      if (!navigator.clipboard || !navigator.clipboard.writeText) {
-        DOM.copyBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Not supported';
-        DOM.copyStatus.textContent = 'Clipboard API not available. Please copy manually.';
-        copyTimeoutId = setTimeout(function() {
-          DOM.copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-          DOM.copyStatus.textContent = '';
-          copyTimeoutId = null;
-        }, 3000);
-        return;
-      }
-
-      navigator.clipboard.writeText(xmlContent).then(function() {
-        DOM.copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
-        DOM.copyBtn.classList.add('copied');
-        DOM.copyStatus.textContent = 'XML copied to clipboard';
-        copyTimeoutId = setTimeout(function() {
-          DOM.copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-          DOM.copyBtn.classList.remove('copied');
-          DOM.copyStatus.textContent = '';
-          copyTimeoutId = null;
-        }, 2000);
-      }).catch(function(error) {
-        console.error('Failed to copy XML to clipboard:', error);
-        DOM.copyBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Failed';
-        DOM.copyBtn.classList.remove('copied');
-        DOM.copyStatus.textContent = 'Failed to copy XML to clipboard';
-        copyTimeoutId = setTimeout(function() {
-          DOM.copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-          DOM.copyStatus.textContent = '';
-          copyTimeoutId = null;
-        }, 2000);
-      });
-    }
-
-    function parseCertificate(base64Cert) {
-      try {
-        const binary = atob(base64Cert);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-
-        // Parse ASN.1 DER structure
-        const cert = parseASN1(bytes, 0);
-        
-        // Certificate structure: SEQUENCE { tbsCertificate, signatureAlgorithm, signature }
-        const tbsCert = cert.children[0];
-        const sigAlgSeq = cert.children[1];
-        
-        // TBS Certificate structure
-        let idx = 0;
-        
-        // Version (optional, tagged [0])
-        if (tbsCert.children[idx].tag === 0xA0) {
-          idx++;
-        }
-        
-        // Serial number
-        idx++;
-        
-        // Signature algorithm
-        idx++;
-        
-        // Issuer
-        const issuer = parseName(tbsCert.children[idx]);
-        DOM.certIssuer.textContent = issuer;
-        idx++;
-        
-        // Validity
-        const validity = tbsCert.children[idx];
-        const notBefore = parseTime(validity.children[0]);
-        const notAfter = parseTime(validity.children[1]);
-        
-        // Check validity and set field status
-        const now = new Date();
-        if (isNaN(notBefore.getTime())) {
-          setFieldStatus(DOM.certNotBefore, 'Invalid date format', 'warning');
-        } else if (now < notBefore) {
-          setFieldStatus(DOM.certNotBefore, formatUTC(notBefore), 'warning', ' (not yet valid)');
-        } else {
-          setFieldStatus(DOM.certNotBefore, formatUTC(notBefore), 'valid');
-        }
-        
-        if (isNaN(notAfter.getTime())) {
-          setFieldStatus(DOM.certNotAfter, 'Invalid date format', 'warning');
-        } else if (now > notAfter) {
-          setFieldStatus(DOM.certNotAfter, formatUTC(notAfter), 'expired', ' (EXPIRED)');
-        } else {
-          setFieldStatus(DOM.certNotAfter, formatUTC(notAfter), 'valid');
-        }
-        
-        idx++;
-        
-        // Subject
-        const subject = parseName(tbsCert.children[idx]);
-        DOM.certSubject.textContent = subject;
-        
-        // Signature algorithm OID
-        const sigAlgOid = parseOID(sigAlgSeq.children[0].bytes);
-        DOM.certSigAlg.textContent = SIG_ALG_MAP[sigAlgOid] || sigAlgOid;
-        
-      } catch (e) {
-        console.error('Certificate parsing error:', e);
-        DOM.certIssuer.textContent = 'Failed to parse certificate';
-      }
-    }
-
-    function parseASN1(bytes, offset) {
-      const tag = bytes[offset];
-      let len = bytes[offset + 1];
-      let lenBytes = 1;
-      
-      if (len & 0x80) {
-        const numLenBytes = len & 0x7f;
-        len = 0;
-        for (let i = 0; i < numLenBytes; i++) {
-          len = (len << 8) | bytes[offset + 2 + i];
-        }
-        lenBytes = 1 + numLenBytes;
-      }
-      
-      const contentStart = offset + 1 + lenBytes;
-      const contentBytes = bytes.slice(contentStart, contentStart + len);
-      
-      const result = {
-        tag: tag,
-        length: len,
-        bytes: contentBytes,
-        totalLength: 1 + lenBytes + len
-      };
-      
-      // Parse constructed types (SEQUENCE, SET, or context-specific)
-      if ((tag & 0x20) || (tag >= 0xA0 && tag <= 0xAF)) {
-        result.children = [];
-        let childOffset = 0;
-        while (childOffset < len) {
-          const child = parseASN1(contentBytes, childOffset);
-          result.children.push(child);
-          childOffset += child.totalLength;
+          return serializeNode(doc, 0).trim()
+        } catch (e) {
+          // In case of any unexpected error, return the original XML
+          return xml
         }
       }
-      
-      return result;
-    }
 
-    function parseName(nameSeq) {
-      const parts = [];
-      for (const rdn of nameSeq.children) {
-        const atv = rdn.children[0];
-        const oid = parseOID(atv.children[0].bytes);
-        const value = decodeString(atv.children[1]);
-        const name = OID_MAP[oid] || oid;
-        parts.push(name + '=' + value);
-      }
-      return parts.join(', ');
-    }
+      let copyTimeoutId = null
+      let copyRequestId = 0
 
-    function parseOID(bytes) {
-      const parts = [];
-      parts.push(Math.floor(bytes[0] / 40));
-      parts.push(bytes[0] % 40);
-      
-      let value = 0;
-      for (let i = 1; i < bytes.length; i++) {
-        value = (value << 7) | (bytes[i] & 0x7f);
-        if (!(bytes[i] & 0x80)) {
-          parts.push(value);
-          value = 0;
+      function copyXml() {
+        const xmlContent = DOM.xmlRaw.textContent
+        const currentRequestId = ++copyRequestId
+
+        // Clear any pending timeout
+        if (copyTimeoutId) {
+          clearTimeout(copyTimeoutId)
+          copyTimeoutId = null
         }
-      }
-      return parts.join('.');
-    }
 
-    function decodeString(node) {
-      const decoder = new TextDecoder('utf-8');
-      return decoder.decode(node.bytes);
-    }
-
-    function parseTime(node) {
-      const str = decodeString(node);
-      if (node.tag === 0x17) {
-        // UTCTime: YYMMDDHHMMSSZ
-        let year = parseInt(str.substr(0, 2));
-        year += year >= 50 ? 1900 : 2000;
-        const month = parseInt(str.substr(2, 2)) - 1;
-        const day = parseInt(str.substr(4, 2));
-        const hour = parseInt(str.substr(6, 2));
-        const min = parseInt(str.substr(8, 2));
-        const sec = parseInt(str.substr(10, 2));
-        return new Date(Date.UTC(year, month, day, hour, min, sec));
-      } else {
-        // GeneralizedTime: YYYYMMDDHHMMSSZ
-        const year = parseInt(str.substr(0, 4));
-        const month = parseInt(str.substr(4, 2)) - 1;
-        const day = parseInt(str.substr(6, 2));
-        const hour = parseInt(str.substr(8, 2));
-        const min = parseInt(str.substr(10, 2));
-        const sec = parseInt(str.substr(12, 2));
-        return new Date(Date.UTC(year, month, day, hour, min, sec));
-      }
-    }
-
-    function extractSamlInfo(xmlDoc) {
-      // Current time for all validity checks
-      const now = new Date();
-
-      // NameID
-      const nameId = xmlDoc.querySelector('NameID') || xmlDoc.querySelector('*|NameID');
-      if (nameId) {
-        DOM.nameIdFormat.textContent = nameId.getAttribute('Format') || 'Not specified';
-        DOM.nameIdValue.textContent = nameId.textContent;
-      }
-
-      // Issuer (from Response or Assertion)
-      const issuer = xmlDoc.querySelector('Issuer') || xmlDoc.querySelector('*|Issuer');
-      if (issuer) {
-        DOM.samlIssuer.textContent = issuer.textContent;
-      }
-
-      // Destination
-      const response = xmlDoc.documentElement;
-      const destination = response.getAttribute('Destination');
-      if (destination) {
-        DOM.samlDestination.textContent = destination;
-      }
-
-      // NotBefore and NotOnOrAfter from Conditions
-      const conditions = xmlDoc.querySelector('Conditions') || xmlDoc.querySelector('*|Conditions');
-      const subjectConfData = xmlDoc.querySelector('SubjectConfirmationData') || xmlDoc.querySelector('*|SubjectConfirmationData');
-      
-      // NotBefore
-      let notBefore = null;
-      if (conditions) {
-        notBefore = conditions.getAttribute('NotBefore');
-      }
-      if (notBefore) {
-        const notBeforeDate = new Date(notBefore);
-        if (isNaN(notBeforeDate.getTime())) {
-          setFieldStatus(DOM.notBefore, 'Invalid date format', 'warning');
-        } else if (now < notBeforeDate) {
-          setFieldStatus(DOM.notBefore, formatUTC(notBeforeDate), 'warning', ' (not yet valid)');
-        } else {
-          setFieldStatus(DOM.notBefore, formatUTC(notBeforeDate), 'valid');
+        // Check if Clipboard API is available
+        if (!navigator.clipboard || !navigator.clipboard.writeText) {
+          DOM.copyBtn.innerHTML =
+            '<i class="fa-solid fa-xmark" aria-hidden="true"></i> Not supported'
+          DOM.copyStatus.textContent =
+            'Clipboard API not available. Please copy manually.'
+          copyTimeoutId = setTimeout(function () {
+            if (copyRequestId !== currentRequestId) return
+            DOM.copyBtn.innerHTML =
+              '<i class="fa-regular fa-copy" aria-hidden="true"></i> Copy'
+            DOM.copyStatus.textContent = ''
+            copyTimeoutId = null
+          }, 3000)
+          return
         }
-      } else {
-        setFieldStatus(DOM.notBefore, '-', null);
+
+        navigator.clipboard
+          .writeText(xmlContent)
+          .then(function () {
+            // Ignore if a newer request or clearAll has invalidated this request
+            if (copyRequestId !== currentRequestId) return
+            DOM.copyBtn.innerHTML =
+              '<i class="fa-solid fa-check" aria-hidden="true"></i> Copied!'
+            DOM.copyBtn.classList.add('copied')
+            DOM.copyStatus.textContent = 'XML copied to clipboard'
+            copyTimeoutId = setTimeout(function () {
+              if (copyRequestId !== currentRequestId) return
+              DOM.copyBtn.innerHTML =
+                '<i class="fa-regular fa-copy" aria-hidden="true"></i> Copy'
+              DOM.copyBtn.classList.remove('copied')
+              DOM.copyStatus.textContent = ''
+              copyTimeoutId = null
+            }, 2000)
+          })
+          .catch(function (error) {
+            if (copyRequestId !== currentRequestId) return
+            console.error('Failed to copy XML to clipboard:', error)
+            DOM.copyBtn.innerHTML =
+              '<i class="fa-solid fa-xmark" aria-hidden="true"></i> Failed'
+            DOM.copyBtn.classList.remove('copied')
+            DOM.copyStatus.textContent = 'Failed to copy XML to clipboard'
+            copyTimeoutId = setTimeout(function () {
+              if (copyRequestId !== currentRequestId) return
+              DOM.copyBtn.innerHTML =
+                '<i class="fa-regular fa-copy" aria-hidden="true"></i> Copy'
+              DOM.copyStatus.textContent = ''
+              copyTimeoutId = null
+            }, 2000)
+          })
       }
 
-      // AuthnInstant
-      const authnStatement = xmlDoc.querySelector('AuthnStatement') || xmlDoc.querySelector('*|AuthnStatement');
-      if (authnStatement) {
-        const authnInstant = authnStatement.getAttribute('AuthnInstant');
-        if (authnInstant) {
-          const authnDate = new Date(authnInstant);
-          if (isNaN(authnDate.getTime())) {
-            setFieldStatus(DOM.authnInstant, 'Invalid date format', 'warning');
+      function parseCertificate(base64Cert) {
+        try {
+          const binary = atob(base64Cert)
+          const bytes = new Uint8Array(binary.length)
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i)
+          }
+
+          // Parse ASN.1 DER structure
+          const cert = parseASN1(bytes, 0)
+
+          // Certificate structure: SEQUENCE { tbsCertificate, signatureAlgorithm, signature }
+          const tbsCert = cert.children[0]
+          const sigAlgSeq = cert.children[1]
+
+          // TBS Certificate structure
+          let idx = 0
+
+          // Version (optional, tagged [0])
+          if (tbsCert.children[idx].tag === 0xa0) {
+            idx++
+          }
+
+          // Serial number
+          idx++
+
+          // Signature algorithm
+          idx++
+
+          // Issuer
+          const issuer = parseName(tbsCert.children[idx])
+          DOM.certIssuer.textContent = issuer
+          idx++
+
+          // Validity
+          const validity = tbsCert.children[idx]
+          const notBefore = parseTime(validity.children[0])
+          const notAfter = parseTime(validity.children[1])
+
+          // Check validity and set field status
+          const now = new Date()
+          if (isNaN(notBefore.getTime())) {
+            setFieldStatus(DOM.certNotBefore, 'Invalid date format', 'warning')
+          } else if (now < notBefore) {
+            setFieldStatus(
+              DOM.certNotBefore,
+              formatUTC(notBefore),
+              'warning',
+              ' (not yet valid)'
+            )
           } else {
-            setFieldStatus(DOM.authnInstant, formatUTC(authnDate), null);
+            setFieldStatus(DOM.certNotBefore, formatUTC(notBefore), 'valid')
           }
-        } else {
-          setFieldStatus(DOM.authnInstant, '-', null);
-        }
-      } else {
-        setFieldStatus(DOM.authnInstant, '-', null);
-      }
 
-      // NotOnOrAfter
-      let notOnOrAfter = null;
-      if (conditions) {
-        notOnOrAfter = conditions.getAttribute('NotOnOrAfter');
-      }
-      if (!notOnOrAfter && subjectConfData) {
-        notOnOrAfter = subjectConfData.getAttribute('NotOnOrAfter');
-      }
-      
-      if (notOnOrAfter) {
-        const expiry = new Date(notOnOrAfter);
-        if (isNaN(expiry.getTime())) {
-          setFieldStatus(DOM.notOnOrAfter, 'Invalid date format', 'warning');
-        } else if (now > expiry) {
-          setFieldStatus(DOM.notOnOrAfter, formatUTC(expiry), 'expired', ' (EXPIRED)');
-        } else {
-          setFieldStatus(DOM.notOnOrAfter, formatUTC(expiry), 'valid');
-        }
-      } else {
-        setFieldStatus(DOM.notOnOrAfter, '-', null);
-      }
-
-      // SessionNotOnOrAfter (from AuthnStatement)
-      if (authnStatement) {
-        const sessionExpiry = authnStatement.getAttribute('SessionNotOnOrAfter');
-        if (sessionExpiry) {
-          const sessionDate = new Date(sessionExpiry);
-          if (isNaN(sessionDate.getTime())) {
-            setFieldStatus(DOM.sessionNotOnOrAfter, 'Invalid date format', 'warning');
-          } else if (now > sessionDate) {
-            setFieldStatus(DOM.sessionNotOnOrAfter, formatUTC(sessionDate), 'expired', ' (EXPIRED)');
+          if (isNaN(notAfter.getTime())) {
+            setFieldStatus(DOM.certNotAfter, 'Invalid date format', 'warning')
+          } else if (now > notAfter) {
+            setFieldStatus(
+              DOM.certNotAfter,
+              formatUTC(notAfter),
+              'expired',
+              ' (EXPIRED)'
+            )
           } else {
-            setFieldStatus(DOM.sessionNotOnOrAfter, formatUTC(sessionDate), 'valid');
+            setFieldStatus(DOM.certNotAfter, formatUTC(notAfter), 'valid')
+          }
+
+          idx++
+
+          // Subject
+          const subject = parseName(tbsCert.children[idx])
+          DOM.certSubject.textContent = subject
+
+          // Signature algorithm OID
+          const sigAlgOid = parseOID(sigAlgSeq.children[0].bytes)
+          DOM.certSigAlg.textContent = SIG_ALG_MAP[sigAlgOid] || sigAlgOid
+        } catch (e) {
+          console.error('Certificate parsing error:', e)
+          DOM.certIssuer.textContent = 'Failed to parse certificate'
+        }
+      }
+
+      function parseASN1(bytes, offset) {
+        const tag = bytes[offset]
+        let len = bytes[offset + 1]
+        let lenBytes = 1
+
+        if (len & 0x80) {
+          const numLenBytes = len & 0x7f
+          len = 0
+          for (let i = 0; i < numLenBytes; i++) {
+            len = (len << 8) | bytes[offset + 2 + i]
+          }
+          lenBytes = 1 + numLenBytes
+        }
+
+        const contentStart = offset + 1 + lenBytes
+        const contentBytes = bytes.slice(contentStart, contentStart + len)
+
+        const result = {
+          tag: tag,
+          length: len,
+          bytes: contentBytes,
+          totalLength: 1 + lenBytes + len
+        }
+
+        // Parse constructed types (SEQUENCE, SET, or context-specific)
+        if (tag & 0x20 || (tag >= 0xa0 && tag <= 0xaf)) {
+          result.children = []
+          let childOffset = 0
+          while (childOffset < len) {
+            const child = parseASN1(contentBytes, childOffset)
+            result.children.push(child)
+            childOffset += child.totalLength
+          }
+        }
+
+        return result
+      }
+
+      function parseName(nameSeq) {
+        const parts = []
+        for (const rdn of nameSeq.children) {
+          const atv = rdn.children[0]
+          const oid = parseOID(atv.children[0].bytes)
+          const value = decodeString(atv.children[1])
+          const name = OID_MAP[oid] || oid
+          parts.push(name + '=' + value)
+        }
+        return parts.join(', ')
+      }
+
+      function parseOID(bytes) {
+        const parts = []
+        parts.push(Math.floor(bytes[0] / 40))
+        parts.push(bytes[0] % 40)
+
+        let value = 0
+        for (let i = 1; i < bytes.length; i++) {
+          value = (value << 7) | (bytes[i] & 0x7f)
+          if (!(bytes[i] & 0x80)) {
+            parts.push(value)
+            value = 0
+          }
+        }
+        return parts.join('.')
+      }
+
+      function decodeString(node) {
+        const decoder = new TextDecoder('utf-8')
+        return decoder.decode(node.bytes)
+      }
+
+      function parseTime(node) {
+        const str = decodeString(node)
+        if (node.tag === 0x17) {
+          // UTCTime: YYMMDDHHMMSSZ
+          let year = parseInt(str.substr(0, 2))
+          year += year >= 50 ? 1900 : 2000
+          const month = parseInt(str.substr(2, 2)) - 1
+          const day = parseInt(str.substr(4, 2))
+          const hour = parseInt(str.substr(6, 2))
+          const min = parseInt(str.substr(8, 2))
+          const sec = parseInt(str.substr(10, 2))
+          return new Date(Date.UTC(year, month, day, hour, min, sec))
+        } else {
+          // GeneralizedTime: YYYYMMDDHHMMSSZ
+          const year = parseInt(str.substr(0, 4))
+          const month = parseInt(str.substr(4, 2)) - 1
+          const day = parseInt(str.substr(6, 2))
+          const hour = parseInt(str.substr(8, 2))
+          const min = parseInt(str.substr(10, 2))
+          const sec = parseInt(str.substr(12, 2))
+          return new Date(Date.UTC(year, month, day, hour, min, sec))
+        }
+      }
+
+      function extractSamlInfo(xmlDoc) {
+        // Current time for all validity checks
+        const now = new Date()
+
+        // NameID
+        const nameId =
+          xmlDoc.querySelector('NameID') || xmlDoc.querySelector('*|NameID')
+        if (nameId) {
+          DOM.nameIdFormat.textContent =
+            nameId.getAttribute('Format') || 'Not specified'
+          DOM.nameIdValue.textContent = nameId.textContent
+        }
+
+        // Issuer (from Response or Assertion)
+        const issuer =
+          xmlDoc.querySelector('Issuer') || xmlDoc.querySelector('*|Issuer')
+        if (issuer) {
+          DOM.samlIssuer.textContent = issuer.textContent
+        }
+
+        // Destination
+        const response = xmlDoc.documentElement
+        const destination = response.getAttribute('Destination')
+        if (destination) {
+          DOM.samlDestination.textContent = destination
+        }
+
+        // NotBefore and NotOnOrAfter from Conditions
+        const conditions =
+          xmlDoc.querySelector('Conditions') ||
+          xmlDoc.querySelector('*|Conditions')
+        const subjectConfData =
+          xmlDoc.querySelector('SubjectConfirmationData') ||
+          xmlDoc.querySelector('*|SubjectConfirmationData')
+
+        // NotBefore
+        let notBefore = null
+        if (conditions) {
+          notBefore = conditions.getAttribute('NotBefore')
+        }
+        if (notBefore) {
+          const notBeforeDate = new Date(notBefore)
+          if (isNaN(notBeforeDate.getTime())) {
+            setFieldStatus(DOM.notBefore, 'Invalid date format', 'warning')
+          } else if (now < notBeforeDate) {
+            setFieldStatus(
+              DOM.notBefore,
+              formatUTC(notBeforeDate),
+              'warning',
+              ' (not yet valid)'
+            )
+          } else {
+            setFieldStatus(DOM.notBefore, formatUTC(notBeforeDate), 'valid')
           }
         } else {
-          setFieldStatus(DOM.sessionNotOnOrAfter, '-', null);
+          setFieldStatus(DOM.notBefore, '-', null)
         }
-      } else {
-        setFieldStatus(DOM.sessionNotOnOrAfter, '-', null);
-      }
 
-      // Status
-      const statusCode = xmlDoc.querySelector('StatusCode') || xmlDoc.querySelector('*|StatusCode');
-      if (statusCode) {
-        const statusValue = statusCode.getAttribute('Value');
-        if (statusValue && statusValue.includes('Success')) {
-          setFieldStatus(DOM.samlStatus, statusValue, 'valid');
-        } else if (statusValue) {
-          setFieldStatus(DOM.samlStatus, statusValue, 'error');
+        // AuthnInstant
+        const authnStatement =
+          xmlDoc.querySelector('AuthnStatement') ||
+          xmlDoc.querySelector('*|AuthnStatement')
+        if (authnStatement) {
+          const authnInstant = authnStatement.getAttribute('AuthnInstant')
+          if (authnInstant) {
+            const authnDate = new Date(authnInstant)
+            if (isNaN(authnDate.getTime())) {
+              setFieldStatus(DOM.authnInstant, 'Invalid date format', 'warning')
+            } else {
+              setFieldStatus(DOM.authnInstant, formatUTC(authnDate), null)
+            }
+          } else {
+            setFieldStatus(DOM.authnInstant, '-', null)
+          }
         } else {
-          setFieldStatus(DOM.samlStatus, '-', null);
+          setFieldStatus(DOM.authnInstant, '-', null)
         }
-      } else {
-        setFieldStatus(DOM.samlStatus, '-', null);
+
+        // NotOnOrAfter
+        let notOnOrAfter = null
+        if (conditions) {
+          notOnOrAfter = conditions.getAttribute('NotOnOrAfter')
+        }
+        if (!notOnOrAfter && subjectConfData) {
+          notOnOrAfter = subjectConfData.getAttribute('NotOnOrAfter')
+        }
+
+        if (notOnOrAfter) {
+          const expiry = new Date(notOnOrAfter)
+          if (isNaN(expiry.getTime())) {
+            setFieldStatus(DOM.notOnOrAfter, 'Invalid date format', 'warning')
+          } else if (now > expiry) {
+            setFieldStatus(
+              DOM.notOnOrAfter,
+              formatUTC(expiry),
+              'expired',
+              ' (EXPIRED)'
+            )
+          } else {
+            setFieldStatus(DOM.notOnOrAfter, formatUTC(expiry), 'valid')
+          }
+        } else {
+          setFieldStatus(DOM.notOnOrAfter, '-', null)
+        }
+
+        // SessionNotOnOrAfter (from AuthnStatement)
+        if (authnStatement) {
+          const sessionExpiry = authnStatement.getAttribute(
+            'SessionNotOnOrAfter'
+          )
+          if (sessionExpiry) {
+            const sessionDate = new Date(sessionExpiry)
+            if (isNaN(sessionDate.getTime())) {
+              setFieldStatus(
+                DOM.sessionNotOnOrAfter,
+                'Invalid date format',
+                'warning'
+              )
+            } else if (now > sessionDate) {
+              setFieldStatus(
+                DOM.sessionNotOnOrAfter,
+                formatUTC(sessionDate),
+                'expired',
+                ' (EXPIRED)'
+              )
+            } else {
+              setFieldStatus(
+                DOM.sessionNotOnOrAfter,
+                formatUTC(sessionDate),
+                'valid'
+              )
+            }
+          } else {
+            setFieldStatus(DOM.sessionNotOnOrAfter, '-', null)
+          }
+        } else {
+          setFieldStatus(DOM.sessionNotOnOrAfter, '-', null)
+        }
+
+        // Status
+        const statusCode =
+          xmlDoc.querySelector('StatusCode') ||
+          xmlDoc.querySelector('*|StatusCode')
+        if (statusCode) {
+          const statusValue = statusCode.getAttribute('Value')
+          if (statusValue && statusValue.includes('Success')) {
+            setFieldStatus(DOM.samlStatus, statusValue, 'valid')
+          } else if (statusValue) {
+            setFieldStatus(DOM.samlStatus, statusValue, 'error')
+          } else {
+            setFieldStatus(DOM.samlStatus, '-', null)
+          }
+        } else {
+          setFieldStatus(DOM.samlStatus, '-', null)
+        }
+
+        // Attributes
+        extractAttributes(xmlDoc)
       }
 
-      // Attributes
-      extractAttributes(xmlDoc);
-    }
+      function extractAttributes(xmlDoc) {
+        const excludedAttributes = [
+          'authnmethodsreferences',
+          'identityprovider'
+        ]
 
-    function extractAttributes(xmlDoc) {
-      const excludedAttributes = [
-        'authnmethodsreferences',
-        'identityprovider'
-      ];
+        const attributes = xmlDoc.querySelectorAll('Attribute, *|Attribute')
 
-      const attributes = xmlDoc.querySelectorAll('Attribute, *|Attribute');
-      
-      // Clear previous attributes
-      DOM.attributesBody.innerHTML = '';
-      
-      if (attributes.length === 0) {
-        DOM.attributesSection.style.display = 'none';
-        return;
-      }
+        // Clear previous attributes
+        DOM.attributesBody.innerHTML = ''
 
-      let hasVisibleAttributes = false;
-      
-      attributes.forEach(attr => {
-        const name = attr.getAttribute('Name') || '';
-        
-        // Get friendly name from the full URL/URN
-        let friendlyName = name;
-        if (name.includes('/')) {
-          friendlyName = name.split('/').pop();
-        } else if (name.includes(':')) {
-          friendlyName = name.split(':').pop();
+        if (attributes.length === 0) {
+          DOM.attributesSection.style.display = 'none'
+          return
         }
-        
-        // Skip excluded attributes
-        if (excludedAttributes.includes(friendlyName.toLowerCase())) {
-          return;
-        }
-        
-        const valueEl = attr.querySelector('AttributeValue, *|AttributeValue');
-        const value = valueEl ? valueEl.textContent : '';
-        
-        if (value) {
-          hasVisibleAttributes = true;
-          const fieldDiv = document.createElement('div');
-          fieldDiv.className = 'field';
-          fieldDiv.innerHTML = `
+
+        let hasVisibleAttributes = false
+
+        attributes.forEach((attr) => {
+          const name = attr.getAttribute('Name') || ''
+
+          // Get friendly name from the full URL/URN
+          let friendlyName = name
+          if (name.includes('/')) {
+            friendlyName = name.split('/').pop()
+          } else if (name.includes(':')) {
+            friendlyName = name.split(':').pop()
+          }
+
+          // Skip excluded attributes
+          if (excludedAttributes.includes(friendlyName.toLowerCase())) {
+            return
+          }
+
+          const valueEl = attr.querySelector('AttributeValue, *|AttributeValue')
+          const value = valueEl ? valueEl.textContent : ''
+
+          if (value) {
+            hasVisibleAttributes = true
+            const fieldDiv = document.createElement('div')
+            fieldDiv.className = 'field'
+            fieldDiv.innerHTML = `
             <div class="field-label">${escapeHtml(friendlyName)}</div>
             <div class="field-value">${escapeHtml(value)}</div>
-          `;
-          DOM.attributesBody.appendChild(fieldDiv);
-        }
-      });
+          `
+            DOM.attributesBody.appendChild(fieldDiv)
+          }
+        })
 
-      DOM.attributesSection.style.display = hasVisibleAttributes ? 'block' : 'none';
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function clearAll() {
-      DOM.samlInput.value = '';
-      DOM.error.style.display = 'none';
-      DOM.results.classList.remove('show');
-      
-      // Reset all field values and classes
-      const fields = document.querySelectorAll('.field-value');
-      fields.forEach(f => {
-        f.textContent = '-';
-        f.classList.remove('valid', 'expired', 'warning', 'error');
-      });
-      
-      // Clear and hide attributes section
-      DOM.attributesBody.innerHTML = '';
-      DOM.attributesSection.style.display = 'none';
-      
-      // Clear and hide certificate raw section
-      DOM.certRaw.textContent = '';
-      DOM.certDetails.style.display = 'none';
-      
-      // Clear and hide raw XML section
-      DOM.xmlRaw.textContent = '';
-      DOM.rawXmlSection.style.display = 'none';
-      
-      // Close all <details> elements within the results so they are collapsed next time
-      const detailsElements = document.querySelectorAll('#results details');
-      detailsElements.forEach(d => d.removeAttribute('open'));
-      
-      // Clear any pending copy timeout and reset copy button state
-      if (copyTimeoutId) {
-        clearTimeout(copyTimeoutId);
-        copyTimeoutId = null;
+        DOM.attributesSection.style.display = hasVisibleAttributes
+          ? 'block'
+          : 'none'
       }
-      DOM.copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
-      DOM.copyBtn.classList.remove('copied');
-      DOM.copyStatus.textContent = '';
-    }
 
-    // Add event listener for copy button
-    DOM.copyBtn.addEventListener('click', copyXml);
-  </script>
-</body>
+      function escapeHtml(text) {
+        const div = document.createElement('div')
+        div.textContent = text
+        return div.innerHTML
+      }
+
+      function clearAll() {
+        DOM.samlInput.value = ''
+        resetResults()
+      }
+
+      // Add event listener for copy button
+      DOM.copyBtn.addEventListener('click', copyXml)
+
+      // Add event listener for theme toggle
+      DOM.themeToggle.addEventListener('click', toggleTheme)
+    </script>
+  </body>
 </html>
