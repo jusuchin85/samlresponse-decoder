@@ -6,7 +6,7 @@ A simple, client-side tool to decode and inspect SAML responses. All processing 
 
 ## 🚀 Live Site
 
-**[https://samlresponsedecoder.justinalex.com](https://samlresponsedecoder.justinalex.com)**
+**[https://samlresponsedecoder.jusuchin85.com](https://samlresponsedecoder.jusuchin85.com)**
 
 ## ✨ Features
 
