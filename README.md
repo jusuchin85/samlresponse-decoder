@@ -1,5 +1,7 @@
 # SAML Response Decoder
 
+[![pages-build-deployment](https://github.com/jusuchin85/samlresponse-decoder/actions/workflows/pages/pages-build-deployment/badge.svg?branch=main)](https://github.com/jusuchin85/samlresponse-decoder/actions/workflows/pages/pages-build-deployment)
+
 A simple, client-side tool to decode and inspect SAML responses. All processing happens locally in your browser — no data is sent to any server.
 
 ## 🚀 Live Site
