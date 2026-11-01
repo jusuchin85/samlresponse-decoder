@@ -1,6 +1,7 @@
 # SAML Response Decoder
 
 [![pages-build-deployment](https://github.com/jusuchin85/samlresponse-decoder/actions/workflows/pages/pages-build-deployment/badge.svg?branch=main)](https://github.com/jusuchin85/samlresponse-decoder/actions/workflows/pages/pages-build-deployment)
+[![CodeQL Advanced](https://github.com/jusuchin85/samlresponse-decoder/actions/workflows/codeql.yml/badge.svg)](https://github.com/jusuchin85/samlresponse-decoder/actions/workflows/codeql.yml)
 
 A client-side tool to decode and inspect SAML 2.0 responses. All processing happens locally in your browser — no data is ever sent to any server.
 
