@@ -1486,21 +1486,58 @@
       }
 
       /**
+       * Ensure a string contains no unpaired UTF-16 surrogates.
+       * @param {string} str - Input string to validate
+       * @returns {string} The validated string
+       */
+      function assertWellFormedUnicode(str) {
+        if (typeof str.isWellFormed === 'function') {
+          if (!str.isWellFormed()) {
+            const err = new Error(
+              'Invalid UTF-8 encoding in decoded SAML response'
+            )
+            err.isUtf8Error = true
+            throw err
+          }
+          return str
+        }
+        for (let i = 0; i < str.length; i++) {
+          const code = str.charCodeAt(i)
+          if (code >= 0xd800 && code <= 0xdbff) {
+            const next = i + 1 < str.length ? str.charCodeAt(i + 1) : 0
+            if (next < 0xdc00 || next > 0xdfff) {
+              const err = new Error(
+                'Invalid UTF-8 encoding in decoded SAML response'
+              )
+              err.isUtf8Error = true
+              throw err
+            }
+            i++
+          } else if (code >= 0xdc00 && code <= 0xdfff) {
+            const err = new Error(
+              'Invalid UTF-8 encoding in decoded SAML response'
+            )
+            err.isUtf8Error = true
+            throw err
+          }
+        }
+        return str
+      }
+
+      /**
        * Normalise raw SAML input (supporting SAMLResponse= query strings,
        * URL-encoded %XX sequences, Base64url characters, and UTF-8 bytes).
        * @param {string} rawInput - User-supplied SAML input
        * @returns {{ xmlString: string, rawBytes: Uint8Array|null }}
        */
       function normaliseAndDecodeInput(rawInput) {
+        assertWellFormedUnicode(rawInput)
         let cleaned = rawInput.trim()
 
         // Allow raw XML input directly if already decoded
         if (cleaned.startsWith('<') || cleaned.startsWith('\uFEFF<')) {
-          const rawXmlBytes = new TextEncoder().encode(cleaned)
           return {
-            xmlString: new TextDecoder('utf-8', { fatal: true }).decode(
-              rawXmlBytes
-            ),
+            xmlString: assertWellFormedUnicode(cleaned),
             rawBytes: null
           }
         }
@@ -1511,30 +1548,25 @@
         if (paramMatch) {
           cleaned = paramMatch[1].trim()
           wasQueryParam = true
-          if (cleaned.startsWith('<') || cleaned.startsWith('\uFEFF<')) {
-            const rawXmlBytes = new TextEncoder().encode(cleaned)
-            return {
-              xmlString: new TextDecoder('utf-8', { fatal: true }).decode(
-                rawXmlBytes
-              ),
-              rawBytes: null
-            }
-          }
         }
 
         // URL-decode percent-encoded input (up to 2 passes for double-encoded payloads),
         // stopping once the result is already recognisable as raw XML.
         // Preserve '+' in Base64 payloads while decoding '+' as space on raw-XML form parameters.
-        let xmlCandidate = cleaned
+        let xmlCandidate = wasQueryParam
+          ? cleaned.replace(/\+/g, ' ').trim()
+          : cleaned
         for (
           let pass = 0;
-          pass < 2 && /%[0-9A-Fa-f]{2}/.test(cleaned);
+          pass < 2 &&
+          (/%[0-9A-Fa-f]{2}/.test(cleaned) ||
+            (wasQueryParam && /%[0-9A-Fa-f]{2}/.test(xmlCandidate)));
           pass++
         ) {
           if (wasQueryParam) {
             try {
               xmlCandidate = decodeURIComponent(
-                pass === 0 ? xmlCandidate.replace(/\+/g, ' ') : xmlCandidate
+                xmlCandidate.replace(/\+/g, ' ')
               ).trim()
             } catch (e) {
               // Ignore form-XML candidate decode failure
@@ -1557,14 +1589,18 @@
           }
         }
 
+        if (
+          wasQueryParam &&
+          (xmlCandidate.startsWith('<') || xmlCandidate.startsWith('\uFEFF<'))
+        ) {
+          cleaned = xmlCandidate
+        }
+
         // Allow URL-encoded or parameter-extracted raw XML input directly
         cleaned = cleaned.trim()
         if (cleaned.startsWith('<') || cleaned.startsWith('\uFEFF<')) {
-          const rawXmlBytes = new TextEncoder().encode(cleaned)
           return {
-            xmlString: new TextDecoder('utf-8', { fatal: true }).decode(
-              rawXmlBytes
-            ),
+            xmlString: assertWellFormedUnicode(cleaned),
             rawBytes: null
           }
         }
@@ -1716,7 +1752,7 @@
             const chunk = result.value
             totalBytes += chunk.byteLength
             if (totalBytes > maxBytes) {
-              await Promise.resolve(
+              Promise.resolve(
                 reader.cancel('Decompressed SAML payload exceeds maximum size')
               ).catch(function ignoreCancelError() {})
               const sizeError = new Error(
@@ -2199,7 +2235,12 @@
 
           // Validity
           const validity = tbsCert.children[idx]
-          if (!validity || !validity.children || validity.children.length < 2) {
+          if (
+            !validity ||
+            validity.tag !== 0x30 ||
+            !validity.children ||
+            validity.children.length !== 2
+          ) {
             throw new Error('Invalid certificate validity structure')
           }
           const notBefore = parseTime(validity.children[0])
@@ -2243,7 +2284,11 @@
           if (
             sigAlgSeq.tag !== 0x30 ||
             !sigAlgSeq.children ||
-            !sigAlgSeq.children[0]
+            sigAlgSeq.children.length < 1 ||
+            sigAlgSeq.children.length > 2 ||
+            sigAlgSeq.children[0].tag !== 0x06 ||
+            !sigAlgSeq.children[0].bytes ||
+            sigAlgSeq.children[0].bytes.length === 0
           ) {
             throw new Error('Invalid signature algorithm structure')
           }
@@ -2343,11 +2388,24 @@
         }
         const parts = []
         for (const rdn of nameSeq.children) {
-          if (!rdn.children || rdn.children.length === 0) {
+          if (
+            !rdn ||
+            rdn.tag !== 0x31 ||
+            !rdn.children ||
+            rdn.children.length === 0
+          ) {
             throw new Error('Invalid X.509 RelativeDistinguishedName structure')
           }
           for (const atv of rdn.children) {
-            if (!atv.children || atv.children.length < 2) {
+            if (
+              !atv ||
+              atv.tag !== 0x30 ||
+              !atv.children ||
+              atv.children.length !== 2 ||
+              atv.children[0].tag !== 0x06 ||
+              !atv.children[0].bytes ||
+              atv.children[0].bytes.length === 0
+            ) {
               throw new Error('Invalid X.509 AttributeTypeAndValue structure')
             }
             const oid = parseOID(atv.children[0].bytes)
@@ -2364,7 +2422,7 @@
 
       function parseOID(bytes) {
         if (!bytes || bytes.length === 0) {
-          return ''
+          throw new Error('Empty ASN.1 OBJECT IDENTIFIER')
         }
         const parts = []
         let value = 0n
