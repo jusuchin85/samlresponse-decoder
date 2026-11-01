@@ -1505,22 +1505,54 @@
           }
         }
 
-        // Extract SAMLResponse parameter if user pasted form/query payload.
-        // Decode form '+' space separators once on the outer parameter while preserving '+' in standalone Base64.
+        // Extract SAMLResponse parameter if user pasted form/query payload
         const paramMatch = cleaned.match(/(?:^|[?&])SAMLResponse=([^&]+)/i)
+        let wasQueryParam = false
         if (paramMatch) {
-          cleaned = paramMatch[1].replace(/\+/g, ' ')
+          cleaned = paramMatch[1].trim()
+          wasQueryParam = true
+          if (cleaned.startsWith('<') || cleaned.startsWith('\uFEFF<')) {
+            const rawXmlBytes = new TextEncoder().encode(cleaned)
+            return {
+              xmlString: new TextDecoder('utf-8', { fatal: true }).decode(
+                rawXmlBytes
+              ),
+              rawBytes: null
+            }
+          }
         }
 
-        // URL-decode percent-encoded input (up to 2 passes for double-encoded payloads)
+        // URL-decode percent-encoded input (up to 2 passes for double-encoded payloads),
+        // stopping once the result is already recognisable as raw XML.
+        // Preserve '+' in Base64 payloads while decoding '+' as space on raw-XML form parameters.
+        let xmlCandidate = cleaned
         for (
           let pass = 0;
           pass < 2 && /%[0-9A-Fa-f]{2}/.test(cleaned);
           pass++
         ) {
+          if (wasQueryParam) {
+            try {
+              xmlCandidate = decodeURIComponent(
+                pass === 0 ? xmlCandidate.replace(/\+/g, ' ') : xmlCandidate
+              ).trim()
+            } catch (e) {
+              // Ignore form-XML candidate decode failure
+            }
+          }
           try {
-            cleaned = decodeURIComponent(cleaned)
+            cleaned = decodeURIComponent(cleaned).trim()
           } catch (e) {
+            break
+          }
+          if (cleaned.startsWith('<') || cleaned.startsWith('\uFEFF<')) {
+            if (
+              wasQueryParam &&
+              (xmlCandidate.startsWith('<') ||
+                xmlCandidate.startsWith('\uFEFF<'))
+            ) {
+              cleaned = xmlCandidate
+            }
             break
           }
         }
@@ -1622,10 +1654,29 @@
        * @param {ReadableStream} stream - Decompressed byte stream
        * @param {number} maxBytes - Maximum allowed byte count
        * @param {number} timeoutMs - Maximum allowed duration in milliseconds
+       * @param {number} [requestId] - Decode request ID to guard against stale readers
        * @returns {Promise<Uint8Array>} Concatenated bytes
        */
-      async function readStreamWithLimit(stream, maxBytes, timeoutMs) {
+      async function readStreamWithLimit(
+        stream,
+        maxBytes,
+        timeoutMs,
+        requestId
+      ) {
         const reader = stream.getReader()
+        if (requestId !== undefined && requestId !== decodeRequestId) {
+          Promise.resolve(
+            reader.cancel('Decompression request was superseded')
+          ).catch(function ignoreCancelError() {})
+          try {
+            reader.releaseLock()
+          } catch (e) {
+            // Ignore lock release errors
+          }
+          const staleError = new Error('Decompression request was superseded')
+          staleError.isStale = true
+          throw staleError
+        }
         activeDecompressionReader = reader
         const chunks = []
         let totalBytes = 0
@@ -1654,6 +1705,13 @@
             if (timeoutError) {
               throw timeoutError
             }
+            if (requestId !== undefined && requestId !== decodeRequestId) {
+              const staleError = new Error(
+                'Decompression request was superseded'
+              )
+              staleError.isStale = true
+              throw staleError
+            }
             if (result.done) break
             const chunk = result.value
             totalBytes += chunk.byteLength
@@ -1671,6 +1729,11 @@
           }
           if (timeoutError) {
             throw timeoutError
+          }
+          if (requestId !== undefined && requestId !== decodeRequestId) {
+            const staleError = new Error('Decompression request was superseded')
+            staleError.isStale = true
+            throw staleError
           }
         } finally {
           if (timeoutId !== null) {
@@ -1698,17 +1761,25 @@
       /**
        * Attempt to inflate DEFLATE-compressed SAML payload (HTTP-Redirect binding).
        * @param {Uint8Array} bytes - Raw decoded bytes
+       * @param {number} [requestId] - Decode request ID to guard against stale fallback attempts
        * @returns {Promise<string>} Inflated UTF-8 XML string
        */
-      async function tryInflateSamlBytes(bytes) {
+      async function tryInflateSamlBytes(bytes, requestId) {
         if (typeof DecompressionStream !== 'function') {
           throw new Error(
             'Compressed SAML payload is not supported in this browser'
           )
         }
+        const targetRequestId =
+          requestId !== undefined ? requestId : decodeRequestId
         const formats = ['deflate-raw', 'deflate']
         let utf8Error = null
         for (let i = 0; i < formats.length; i++) {
+          if (targetRequestId !== decodeRequestId) {
+            const staleError = new Error('Decompression request was superseded')
+            staleError.isStale = true
+            throw staleError
+          }
           let inflatedBytes
           try {
             const stream = new Blob([bytes])
@@ -1717,10 +1788,14 @@
             inflatedBytes = await readStreamWithLimit(
               stream,
               MAX_INFLATED_BYTES,
-              DEFLATE_TIMEOUT_MS
+              DEFLATE_TIMEOUT_MS,
+              targetRequestId
             )
           } catch (e) {
-            if (e && (e.isSizeLimit || e.isTimeout)) {
+            if (
+              targetRequestId !== decodeRequestId ||
+              (e && (e.isSizeLimit || e.isTimeout || e.isStale))
+            ) {
               throw e
             }
             // Try next format
@@ -1824,7 +1899,7 @@
           // or when raw bytes began with 0x3c ('<') and direct XML parsing failed
           if (decoded.rawBytes) {
             const currentDecodeId = decodeRequestId
-            tryInflateSamlBytes(decoded.rawBytes)
+            tryInflateSamlBytes(decoded.rawBytes, currentDecodeId)
               .then(function handleInflatedXml(inflatedXml) {
                 if (currentDecodeId !== decodeRequestId) return
                 try {
