@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';"
+    />
     <title>SAML Response Decoder</title>
     <script>
       // Prevent flash of wrong theme by setting data-theme before styles load
@@ -32,8 +36,8 @@
     </script>
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
@@ -46,12 +50,15 @@
         --color-text-primary: #24292f;
         --color-text-secondary: #57606a;
         --color-border: #d0d7de;
+        --color-border-control: #6e7781;
 
         /* Colours - Interactive */
         --color-accent: #0969da;
         --color-accent-hover: #0550ae;
-        --color-btn-primary: #2da44e;
-        --color-btn-primary-hover: #2c974b;
+        --color-btn-primary: #1f883d;
+        --color-btn-primary-hover: #1a7f37;
+        --color-btn-accent: #0969da;
+        --color-btn-accent-hover: #0550ae;
         --color-btn-secondary: #6e7781;
         --color-btn-secondary-hover: #57606a;
         --color-btn-dark: #24292f;
@@ -81,12 +88,15 @@
         --color-text-primary: #c9d1d9;
         --color-text-secondary: #8b949e;
         --color-border: #30363d;
+        --color-border-control: #8b949e;
 
         /* Colours - Interactive */
         --color-accent: #58a6ff;
         --color-accent-hover: #79b8ff;
         --color-btn-primary: #238636;
-        --color-btn-primary-hover: #2ea043;
+        --color-btn-primary-hover: #1f883d;
+        --color-btn-accent: #1f6feb;
+        --color-btn-accent-hover: #1a63d4;
         --color-btn-secondary: #30363d;
         --color-btn-secondary-hover: #484f58;
         --color-btn-dark: #21262d;
@@ -96,7 +106,7 @@
         /* Colours - Status */
         --color-valid-bg: #1f352a;
         --color-valid-text: #3fb950;
-        --color-error-bg: #3d1f20;
+        --color-error-bg: #36191b;
         --color-error-text: #f85149;
         --color-error-border: #f85149;
         --color-warning-bg: #3d2e00;
@@ -149,7 +159,7 @@
       }
       .theme-toggle {
         background: var(--color-bg-tertiary);
-        border: 1px solid var(--color-border);
+        border: 1px solid var(--color-border-control);
         border-radius: 6px;
         padding: 8px 12px;
         cursor: pointer;
@@ -197,7 +207,7 @@
         width: 100%;
         height: 150px;
         padding: 12px;
-        border: 1px solid var(--color-border);
+        border: 1px solid var(--color-border-control);
         border-radius: 6px;
         font-family: monospace;
         font-size: 13px;
@@ -227,8 +237,15 @@
       button:hover {
         background: var(--color-btn-primary-hover);
       }
+      button:focus-visible,
+      summary:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
+      }
       button.secondary {
         background: var(--color-btn-secondary);
+        border: 1px solid var(--color-border-control);
       }
       button.secondary:hover {
         background: var(--color-btn-secondary-hover);
@@ -318,7 +335,7 @@
       }
       .help-section {
         background: var(--color-bg-secondary);
-        border: 1px solid var(--color-border);
+        border: 1px solid var(--color-border-control);
         border-radius: 6px;
         margin-bottom: 16px;
       }
@@ -403,13 +420,14 @@
         line-height: 1;
       }
       .modal-close:hover {
+        background: none;
         color: var(--color-text-primary);
       }
       .modal-body {
         padding: 16px;
       }
       .help-btn {
-        background: var(--color-accent);
+        background: var(--color-btn-accent);
         font-size: 12px;
         padding: 4px 8px;
         margin-left: 8px;
@@ -417,7 +435,7 @@
         vertical-align: middle;
       }
       .help-btn:hover {
-        background: var(--color-accent-hover);
+        background: var(--color-btn-accent-hover);
       }
       /* Field reference table styles */
       .field-ref-table {
@@ -502,7 +520,7 @@
         right: 8px;
         background: var(--color-btn-dark);
         color: var(--color-btn-text);
-        border: none;
+        border: 1px solid var(--color-border-control);
         padding: 6px 12px;
         border-radius: 4px;
         font-size: 12px;
@@ -699,7 +717,6 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="helpModalTitle"
-        onclick="if(event.target === event.currentTarget) closeModal('helpModal')"
       >
         <div class="modal">
           <div class="modal-header">
@@ -707,9 +724,10 @@
               <span aria-hidden="true">📜</span> X.509 Certificate Fields
             </h2>
             <button
+              type="button"
               class="modal-close"
               aria-label="Close modal"
-              onclick="closeModal('helpModal')"
+              data-modal-close="helpModal"
             >
               &times;
             </button>
@@ -779,7 +797,6 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="samlHelpModalTitle"
-        onclick="if(event.target === event.currentTarget) closeModal('samlHelpModal')"
       >
         <div class="modal">
           <div class="modal-header">
@@ -787,9 +804,10 @@
               <span aria-hidden="true">🎫</span> SAML Assertion Fields
             </h2>
             <button
+              type="button"
               class="modal-close"
               aria-label="Close modal"
-              onclick="closeModal('samlHelpModal')"
+              data-modal-close="samlHelpModal"
             >
               &times;
             </button>
@@ -892,7 +910,6 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="attrHelpModalTitle"
-        onclick="if(event.target === event.currentTarget) closeModal('attrHelpModal')"
       >
         <div class="modal">
           <div class="modal-header">
@@ -900,9 +917,10 @@
               <span aria-hidden="true">🏷️</span> SAML Attributes
             </h2>
             <button
+              type="button"
               class="modal-close"
               aria-label="Close modal"
-              onclick="closeModal('attrHelpModal')"
+              data-modal-close="attrHelpModal"
             >
               &times;
             </button>
@@ -971,8 +989,8 @@
           placeholder="PD94bWwgdmVyc2lvbj0iMS4wIi..."
         ></textarea>
         <div style="margin-top: 12px">
-          <button onclick="decode()">Decode</button>
-          <button class="secondary" onclick="clearAll()">Clear</button>
+          <button type="button" id="decodeBtn">Decode</button>
+          <button type="button" class="secondary" id="clearBtn">Clear</button>
         </div>
       </div>
 
@@ -988,6 +1006,7 @@
               <summary>View decoded SAML Response XML</summary>
               <div class="xml-container">
                 <button
+                  type="button"
                   class="copy-btn"
                   id="copyBtn"
                   aria-label="Copy XML to clipboard"
@@ -1009,11 +1028,13 @@
           <div class="section-header">
             <span aria-hidden="true">📜</span> X.509 Certificate
             <button
+              type="button"
               class="help-btn"
               aria-label="Help for X.509 Certificate fields"
-              onclick="openModal('helpModal')"
+              data-modal-open="helpModal"
             >
-              <i class="fa-solid fa-circle-question"></i> Help
+              <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+              Help
             </button>
           </div>
           <div class="section-body">
@@ -1077,11 +1098,13 @@
           <div class="section-header">
             <span aria-hidden="true">🎫</span> SAML Assertion
             <button
+              type="button"
               class="help-btn"
               aria-label="Help for SAML Assertion fields"
-              onclick="openModal('samlHelpModal')"
+              data-modal-open="samlHelpModal"
             >
-              <i class="fa-solid fa-circle-question"></i> Help
+              <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+              Help
             </button>
           </div>
           <div class="section-body">
@@ -1173,11 +1196,13 @@
           <div class="section-header">
             <span aria-hidden="true">🏷️</span> SAML Attributes
             <button
+              type="button"
               class="help-btn"
               aria-label="Help for SAML Attributes"
-              onclick="openModal('attrHelpModal')"
+              data-modal-open="attrHelpModal"
             >
-              <i class="fa-solid fa-circle-question"></i> Help
+              <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+              Help
             </button>
           </div>
           <div class="section-body" id="attributesBody"></div>
@@ -1251,6 +1276,7 @@
       function openModal(modalId) {
         lastFocusedElement = document.activeElement
         const modal = document.getElementById(modalId)
+        if (!modal) return
         modal.classList.add('show')
         // Focus the close button
         const closeBtn = modal.querySelector('.modal-close')
@@ -1260,7 +1286,9 @@
       }
 
       function closeModal(modalId) {
-        document.getElementById(modalId).classList.remove('show')
+        const modal = document.getElementById(modalId)
+        if (!modal) return
+        modal.classList.remove('show')
         // Return focus to the element that opened the modal
         if (lastFocusedElement) {
           lastFocusedElement.focus()
@@ -1268,8 +1296,28 @@
         }
       }
 
+      function handleModalOverlayClick(event) {
+        if (event.target === event.currentTarget) {
+          closeModal(event.currentTarget.id)
+        }
+      }
+
+      function handleModalOpenClick(event) {
+        const modalId = event.currentTarget.getAttribute('data-modal-open')
+        if (modalId) {
+          openModal(modalId)
+        }
+      }
+
+      function handleModalCloseClick(event) {
+        const modalId = event.currentTarget.getAttribute('data-modal-close')
+        if (modalId) {
+          closeModal(modalId)
+        }
+      }
+
       // Close modal on Escape key and trap focus
-      document.addEventListener('keydown', function (event) {
+      function handleDocumentKeydown(event) {
         const visibleModal = document.querySelector('.modal-overlay.show')
         if (!visibleModal) return
 
@@ -1308,11 +1356,15 @@
             }
           }
         }
-      })
+      }
+
+      document.addEventListener('keydown', handleDocumentKeydown)
 
       // DOM element cache
       const DOM = {
         samlInput: document.getElementById('samlInput'),
+        decodeBtn: document.getElementById('decodeBtn'),
+        clearBtn: document.getElementById('clearBtn'),
         error: document.getElementById('error'),
         results: document.getElementById('results'),
         copyBtn: document.getElementById('copyBtn'),
@@ -1341,6 +1393,21 @@
       }
 
       /**
+       * Update the Copy button icon and label using safe DOM nodes.
+       * @param {string} iconClass - Font Awesome classes for the icon
+       * @param {string} label - Visible button text
+       */
+      function setCopyButtonState(iconClass, label) {
+        if (!DOM.copyBtn) return
+        DOM.copyBtn.textContent = ''
+        const icon = document.createElement('i')
+        icon.className = iconClass
+        icon.setAttribute('aria-hidden', 'true')
+        DOM.copyBtn.appendChild(icon)
+        DOM.copyBtn.appendChild(document.createTextNode(' ' + label))
+      }
+
+      /**
        * Set field status with value and optional status class
        * @param {HTMLElement} element - The field element to update
        * @param {string} value - The text value to display
@@ -1355,11 +1422,30 @@
         }
       }
 
+      let decodeRequestId = 0
+      let activeDecompressionReader = null
+
+      function cancelActiveDecompression() {
+        if (activeDecompressionReader) {
+          const readerToCancel = activeDecompressionReader
+          activeDecompressionReader = null
+          try {
+            Promise.resolve(
+              readerToCancel.cancel('Decompression cancelled')
+            ).catch(function ignoreCancelError() {})
+          } catch (e) {
+            // Ignore cancellation errors
+          }
+        }
+      }
+
       /**
        * Reset all result-related UI state so a new decode starts clean.
        * Clears field values/status classes and hides optional sections.
        */
       function resetResults() {
+        decodeRequestId++
+        cancelActiveDecompression()
         DOM.error.style.display = 'none'
         DOM.results.classList.remove('show')
 
@@ -1371,7 +1457,7 @@
         })
 
         // Clear and hide attributes section
-        DOM.attributesBody.innerHTML = ''
+        DOM.attributesBody.textContent = ''
         DOM.attributesSection.style.display = 'none'
 
         // Clear and hide certificate raw section
@@ -1394,10 +1480,388 @@
           copyTimeoutId = null
         }
         copyRequestId++
-        DOM.copyBtn.innerHTML =
-          '<i class="fa-regular fa-copy" aria-hidden="true"></i> Copy'
+        setCopyButtonState('fa-regular fa-copy', 'Copy')
         DOM.copyBtn.classList.remove('copied')
         DOM.copyStatus.textContent = ''
+      }
+
+      /**
+       * Normalise raw SAML input (supporting SAMLResponse= query strings,
+       * URL-encoded %XX sequences, Base64url characters, and UTF-8 bytes).
+       * @param {string} rawInput - User-supplied SAML input
+       * @returns {{ xmlString: string, rawBytes: Uint8Array|null }}
+       */
+      function normaliseAndDecodeInput(rawInput) {
+        let cleaned = rawInput.trim()
+
+        // Allow raw XML input directly if already decoded
+        if (cleaned.startsWith('<') || cleaned.startsWith('\uFEFF<')) {
+          const rawXmlBytes = new TextEncoder().encode(cleaned)
+          return {
+            xmlString: new TextDecoder('utf-8', { fatal: true }).decode(
+              rawXmlBytes
+            ),
+            rawBytes: null
+          }
+        }
+
+        // Extract SAMLResponse parameter if user pasted form/query payload
+        const paramMatch = cleaned.match(/(?:^|[?&])SAMLResponse=([^&]+)/i)
+        let wasQueryParam = false
+        if (paramMatch) {
+          cleaned = paramMatch[1].trim()
+          wasQueryParam = true
+          if (cleaned.startsWith('<') || cleaned.startsWith('\uFEFF<')) {
+            const rawXmlBytes = new TextEncoder().encode(cleaned)
+            return {
+              xmlString: new TextDecoder('utf-8', { fatal: true }).decode(
+                rawXmlBytes
+              ),
+              rawBytes: null
+            }
+          }
+        }
+
+        // URL-decode percent-encoded input (up to 2 passes for double-encoded payloads),
+        // stopping once the result is already recognisable as raw XML.
+        // Preserve '+' in Base64 payloads while decoding '+' as space on raw-XML form parameters.
+        let xmlCandidate = cleaned
+        for (
+          let pass = 0;
+          pass < 2 && /%[0-9A-Fa-f]{2}/.test(cleaned);
+          pass++
+        ) {
+          if (wasQueryParam) {
+            try {
+              xmlCandidate = decodeURIComponent(
+                pass === 0 ? xmlCandidate.replace(/\+/g, ' ') : xmlCandidate
+              ).trim()
+            } catch (e) {
+              // Ignore form-XML candidate decode failure
+            }
+          }
+          try {
+            cleaned = decodeURIComponent(cleaned).trim()
+          } catch (e) {
+            break
+          }
+          if (
+            wasQueryParam &&
+            (xmlCandidate.startsWith('<') || xmlCandidate.startsWith('\uFEFF<'))
+          ) {
+            cleaned = xmlCandidate
+            break
+          }
+          if (cleaned.startsWith('<') || cleaned.startsWith('\uFEFF<')) {
+            break
+          }
+        }
+
+        // Allow URL-encoded or parameter-extracted raw XML input directly
+        cleaned = cleaned.trim()
+        if (cleaned.startsWith('<') || cleaned.startsWith('\uFEFF<')) {
+          const rawXmlBytes = new TextEncoder().encode(cleaned)
+          return {
+            xmlString: new TextDecoder('utf-8', { fatal: true }).decode(
+              rawXmlBytes
+            ),
+            rawBytes: null
+          }
+        }
+
+        // Strip whitespace/newlines and normalise Base64url characters
+        cleaned = cleaned
+          .replace(/\s+/g, '')
+          .replace(/-/g, '+')
+          .replace(/_/g, '/')
+
+        // Remove existing padding and re-pad to a multiple of 4
+        let padEnd = cleaned.length
+        while (padEnd > 0 && cleaned.charCodeAt(padEnd - 1) === 0x3d) {
+          padEnd--
+        }
+        cleaned = cleaned.slice(0, padEnd)
+        if (!cleaned || !/^[A-Za-z0-9+/]+$/.test(cleaned)) {
+          throw new Error('Input is not valid Base64-encoded data')
+        }
+        const remainder = cleaned.length % 4
+        if (remainder === 1) {
+          throw new Error('Invalid Base64 input length')
+        }
+        if (remainder > 0) {
+          cleaned += '='.repeat(4 - remainder)
+        }
+
+        const binary = atob(cleaned)
+        const bytes = new Uint8Array(binary.length)
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i)
+        }
+
+        let xmlString = ''
+        let utf8Error = null
+        try {
+          const decoder = new TextDecoder('utf-8', { fatal: true })
+          xmlString = decoder.decode(bytes)
+        } catch (e) {
+          const decodeErr = new Error(
+            'Invalid UTF-8 encoding in decoded SAML response'
+          )
+          decodeErr.isUtf8Error = true
+          utf8Error = decodeErr
+        }
+        return {
+          xmlString: xmlString,
+          rawBytes: bytes,
+          utf8Error: utf8Error
+        }
+      }
+
+      /**
+       * Check whether raw bytes begin with an optional UTF-8 BOM and ASCII whitespace followed by '<' (0x3c).
+       * @param {Uint8Array} bytes - Raw decoded bytes
+       * @returns {boolean} True when the first non-whitespace byte is 0x3c
+       */
+      function startsWithXmlByte(bytes) {
+        if (!bytes || bytes.length === 0) return false
+        let i = 0
+        if (
+          bytes.length >= 3 &&
+          bytes[0] === 0xef &&
+          bytes[1] === 0xbb &&
+          bytes[2] === 0xbf
+        ) {
+          i = 3
+        }
+        while (
+          i < bytes.length &&
+          (bytes[i] === 0x20 ||
+            bytes[i] === 0x09 ||
+            bytes[i] === 0x0a ||
+            bytes[i] === 0x0d)
+        ) {
+          i++
+        }
+        return i < bytes.length && bytes[i] === 0x3c
+      }
+
+      // Maximum allowed size (5 MiB) and deadline (3,000 ms) for inflated DEFLATE SAML payloads
+      const MAX_INFLATED_BYTES = 5 * 1024 * 1024
+      const DEFLATE_TIMEOUT_MS = 3000
+
+      /**
+       * Read a ReadableStream incrementally up to a maximum byte limit and deadline.
+       * @param {ReadableStream} stream - Decompressed byte stream
+       * @param {number} maxBytes - Maximum allowed byte count
+       * @param {number} timeoutMs - Maximum allowed duration in milliseconds
+       * @param {number} [requestId] - Decode request ID to guard against stale readers
+       * @returns {Promise<Uint8Array>} Concatenated bytes
+       */
+      async function readStreamWithLimit(
+        stream,
+        maxBytes,
+        timeoutMs,
+        requestId
+      ) {
+        const reader = stream.getReader()
+        if (requestId !== undefined && requestId !== decodeRequestId) {
+          Promise.resolve(
+            reader.cancel('Decompression request was superseded')
+          ).catch(function ignoreCancelError() {})
+          try {
+            reader.releaseLock()
+          } catch (e) {
+            // Ignore lock release errors
+          }
+          const staleError = new Error('Decompression request was superseded')
+          staleError.isStale = true
+          throw staleError
+        }
+        activeDecompressionReader = reader
+        const chunks = []
+        let totalBytes = 0
+        let timeoutId = null
+        let timeoutError = null
+
+        const timeoutPromise = new Promise(function (_, reject) {
+          timeoutId = setTimeout(function onDecompressTimeout() {
+            timeoutError = new Error(
+              'Compressed SAML payload decompression timed out after ' +
+                timeoutMs +
+                ' ms'
+            )
+            timeoutError.isTimeout = true
+            reject(timeoutError)
+            Promise.resolve(
+              reader.cancel('Decompressed SAML payload timed out')
+            ).catch(function ignoreCancelError() {})
+          }, timeoutMs)
+        })
+        timeoutPromise.catch(function ignoreUnhandledTimeout() {})
+
+        try {
+          while (true) {
+            const result = await Promise.race([timeoutPromise, reader.read()])
+            if (timeoutError) {
+              throw timeoutError
+            }
+            if (requestId !== undefined && requestId !== decodeRequestId) {
+              const staleError = new Error(
+                'Decompression request was superseded'
+              )
+              staleError.isStale = true
+              throw staleError
+            }
+            if (result.done) break
+            const chunk = result.value
+            totalBytes += chunk.byteLength
+            if (totalBytes > maxBytes) {
+              await Promise.resolve(
+                reader.cancel('Decompressed SAML payload exceeds maximum size')
+              ).catch(function ignoreCancelError() {})
+              const sizeError = new Error(
+                'Compressed SAML payload exceeds the 5 MiB maximum decoded size'
+              )
+              sizeError.isSizeLimit = true
+              throw sizeError
+            }
+            chunks.push(chunk)
+          }
+          if (timeoutError) {
+            throw timeoutError
+          }
+          if (requestId !== undefined && requestId !== decodeRequestId) {
+            const staleError = new Error('Decompression request was superseded')
+            staleError.isStale = true
+            throw staleError
+          }
+        } finally {
+          if (timeoutId !== null) {
+            clearTimeout(timeoutId)
+          }
+          if (activeDecompressionReader === reader) {
+            activeDecompressionReader = null
+          }
+          try {
+            reader.releaseLock()
+          } catch (e) {
+            // Ignore lock release errors after cancellation
+          }
+        }
+
+        const merged = new Uint8Array(totalBytes)
+        let offset = 0
+        for (let i = 0; i < chunks.length; i++) {
+          merged.set(chunks[i], offset)
+          offset += chunks[i].byteLength
+        }
+        return merged
+      }
+
+      /**
+       * Attempt to inflate DEFLATE-compressed SAML payload (HTTP-Redirect binding).
+       * @param {Uint8Array} bytes - Raw decoded bytes
+       * @param {number} [requestId] - Decode request ID to guard against stale fallback attempts
+       * @returns {Promise<string>} Inflated UTF-8 XML string
+       */
+      async function tryInflateSamlBytes(bytes, requestId) {
+        if (typeof DecompressionStream !== 'function') {
+          throw new Error(
+            'Compressed SAML payload is not supported in this browser'
+          )
+        }
+        const targetRequestId =
+          requestId !== undefined ? requestId : decodeRequestId
+        const formats = ['deflate-raw', 'deflate']
+        let utf8Error = null
+        for (let i = 0; i < formats.length; i++) {
+          if (targetRequestId !== decodeRequestId) {
+            const staleError = new Error('Decompression request was superseded')
+            staleError.isStale = true
+            throw staleError
+          }
+          let inflatedBytes
+          try {
+            const stream = new Blob([bytes])
+              .stream()
+              .pipeThrough(new DecompressionStream(formats[i]))
+            inflatedBytes = await readStreamWithLimit(
+              stream,
+              MAX_INFLATED_BYTES,
+              DEFLATE_TIMEOUT_MS,
+              targetRequestId
+            )
+          } catch (e) {
+            if (
+              targetRequestId !== decodeRequestId ||
+              (e && (e.isSizeLimit || e.isTimeout || e.isStale))
+            ) {
+              throw e
+            }
+            // Try next format
+            continue
+          }
+
+          try {
+            const text = new TextDecoder('utf-8', { fatal: true }).decode(
+              inflatedBytes
+            )
+            if (
+              text &&
+              text
+                .replace(/^\uFEFF/, '')
+                .trim()
+                .startsWith('<')
+            ) {
+              return text
+            }
+          } catch (e) {
+            const decodeErr = new Error(
+              'Invalid UTF-8 encoding in decompressed SAML response'
+            )
+            decodeErr.isUtf8Error = true
+            utf8Error = decodeErr
+          }
+        }
+        if (utf8Error) {
+          throw utf8Error
+        }
+        throw new Error('Invalid XML: decoded data is not valid XML')
+      }
+
+      /**
+       * Parse and render a decoded SAML XML string.
+       * @param {string} xmlString - Decoded XML text
+       */
+      function processDecodedXml(xmlString) {
+        const parser = new DOMParser()
+        const xmlDoc = parser.parseFromString(xmlString, 'application/xml')
+
+        // Check for parse errors
+        const parseError = xmlDoc.querySelector('parsererror')
+        if (parseError) {
+          throw new Error('Invalid XML: ' + parseError.textContent)
+        }
+
+        // Extract certificate (supporting namespace-prefixed ds:X509Certificate)
+        const certElement =
+          xmlDoc.querySelector('X509Certificate') ||
+          xmlDoc.querySelector('*|X509Certificate')
+        if (certElement) {
+          const certBase64 = certElement.textContent.replace(/\s/g, '')
+          if (certBase64) {
+            parseCertificate(certBase64)
+            displayRawCertificate(certBase64)
+          }
+        }
+
+        // Extract SAML info
+        extractSamlInfo(xmlDoc)
+
+        // Display raw XML using the already-parsed XML document
+        displayRawXml(xmlDoc, xmlString)
+
+        DOM.results.classList.add('show')
       }
 
       function decode() {
@@ -1412,34 +1876,51 @@
         }
 
         try {
-          // Decode base64
-          const xmlString = atob(input)
+          const decoded = normaliseAndDecodeInput(input)
+          const trimmedXml = decoded.xmlString.replace(/^\uFEFF/, '').trim()
+          let directXmlError =
+            decoded.utf8Error && startsWithXmlByte(decoded.rawBytes)
+              ? decoded.utf8Error
+              : null
 
-          // Parse XML
-          const parser = new DOMParser()
-          const xmlDoc = parser.parseFromString(xmlString, 'text/xml')
-
-          // Check for parse errors
-          const parseError = xmlDoc.querySelector('parsererror')
-          if (parseError) {
-            throw new Error('Invalid XML: ' + parseError.textContent)
+          if (trimmedXml.startsWith('<')) {
+            try {
+              processDecodedXml(trimmedXml)
+              return
+            } catch (xmlErr) {
+              if (!decoded.rawBytes) {
+                throw xmlErr
+              }
+              directXmlError = xmlErr
+            }
           }
 
-          // Extract certificate
-          const certElement = xmlDoc.querySelector('X509Certificate')
-          if (certElement) {
-            const certBase64 = certElement.textContent.replace(/\s/g, '')
-            parseCertificate(certBase64)
-            displayRawCertificate(certBase64)
+          // Attempt DEFLATE decompression (HTTP-Redirect binding) when input is compressed
+          // or when raw bytes began with 0x3c ('<') and direct XML parsing failed
+          if (decoded.rawBytes) {
+            const currentDecodeId = decodeRequestId
+            tryInflateSamlBytes(decoded.rawBytes, currentDecodeId)
+              .then(function handleInflatedXml(inflatedXml) {
+                if (currentDecodeId !== decodeRequestId) return
+                try {
+                  processDecodedXml(inflatedXml.replace(/^\uFEFF/, '').trim())
+                } catch (err) {
+                  if (currentDecodeId !== decodeRequestId) return
+                  showError('Failed to decode: ' + err.message)
+                }
+              })
+              .catch(function handleInflateError(err) {
+                if (currentDecodeId !== decodeRequestId) return
+                const reportedErr =
+                  err && (err.isSizeLimit || err.isTimeout || err.isUtf8Error)
+                    ? err
+                    : directXmlError || err
+                showError('Failed to decode: ' + reportedErr.message)
+              })
+            return
           }
 
-          // Extract SAML info
-          extractSamlInfo(xmlDoc)
-
-          // Display raw XML
-          displayRawXml(xmlString)
-
-          DOM.results.classList.add('show')
+          processDecodedXml(trimmedXml)
         } catch (e) {
           showError('Failed to decode: ' + e.message)
         }
@@ -1469,9 +1950,9 @@
         DOM.certDetails.style.display = 'block'
       }
 
-      function displayRawXml(xmlString) {
-        // Pretty print XML
-        const formatted = formatXml(xmlString)
+      function displayRawXml(xmlDoc, xmlString) {
+        // Pretty print XML from the already-parsed Document
+        const formatted = formatXml(xmlDoc, xmlString)
         DOM.xmlRaw.textContent = formatted
         DOM.rawXmlSection.style.display = 'block'
         // Reset details state to closed on new decode
@@ -1480,25 +1961,22 @@
           .removeAttribute('open')
       }
 
-      function formatXml(xml) {
-        if (!xml || xml.length < 3) {
-          return xml || ''
+      function formatXml(xmlDoc, fallbackXml) {
+        if (!xmlDoc || typeof xmlDoc !== 'object') {
+          return fallbackXml || ''
         }
 
         try {
-          const parser = new DOMParser()
-          const doc = parser.parseFromString(xml, 'application/xml')
-
-          // If the XML is not well-formed, DOMParser will create a parsererror element
-          const parseError = doc.getElementsByTagName('parsererror')[0]
+          const parseError =
+            xmlDoc.getElementsByTagName &&
+            xmlDoc.getElementsByTagName('parsererror')[0]
           if (parseError) {
-            // Fall back to the original string if parsing fails
-            return xml
+            return fallbackXml || ''
           }
 
           const indentUnit = '  '
 
-          function serializeNode(node, depth) {
+          function serialiseNode(node, depth) {
             const indent = indentUnit.repeat(depth)
             let output = ''
 
@@ -1534,7 +2012,7 @@
                   }
 
                   children.forEach(function (child) {
-                    const childText = serializeNode(child, depth + 1)
+                    const childText = serialiseNode(child, depth + 1)
                     if (childText) {
                       output += childText
                     }
@@ -1580,7 +2058,7 @@
               case Node.DOCUMENT_NODE:
               case Node.DOCUMENT_FRAGMENT_NODE: {
                 Array.prototype.forEach.call(node.childNodes, function (child) {
-                  output += serializeNode(child, depth)
+                  output += serialiseNode(child, depth)
                 })
                 break
               }
@@ -1600,10 +2078,10 @@
             return output
           }
 
-          return serializeNode(doc, 0).trim()
+          return serialiseNode(xmlDoc, 0).trim()
         } catch (e) {
           // In case of any unexpected error, return the original XML
-          return xml
+          return fallbackXml || ''
         }
       }
 
@@ -1622,14 +2100,12 @@
 
         // Check if Clipboard API is available
         if (!navigator.clipboard || !navigator.clipboard.writeText) {
-          DOM.copyBtn.innerHTML =
-            '<i class="fa-solid fa-xmark" aria-hidden="true"></i> Not supported'
+          setCopyButtonState('fa-solid fa-xmark', 'Not supported')
           DOM.copyStatus.textContent =
             'Clipboard API not available. Please copy manually.'
           copyTimeoutId = setTimeout(function () {
             if (copyRequestId !== currentRequestId) return
-            DOM.copyBtn.innerHTML =
-              '<i class="fa-regular fa-copy" aria-hidden="true"></i> Copy'
+            setCopyButtonState('fa-regular fa-copy', 'Copy')
             DOM.copyStatus.textContent = ''
             copyTimeoutId = null
           }, 3000)
@@ -1641,14 +2117,12 @@
           .then(function () {
             // Ignore if a newer request or clearAll has invalidated this request
             if (copyRequestId !== currentRequestId) return
-            DOM.copyBtn.innerHTML =
-              '<i class="fa-solid fa-check" aria-hidden="true"></i> Copied!'
+            setCopyButtonState('fa-solid fa-check', 'Copied!')
             DOM.copyBtn.classList.add('copied')
             DOM.copyStatus.textContent = 'XML copied to clipboard'
             copyTimeoutId = setTimeout(function () {
               if (copyRequestId !== currentRequestId) return
-              DOM.copyBtn.innerHTML =
-                '<i class="fa-regular fa-copy" aria-hidden="true"></i> Copy'
+              setCopyButtonState('fa-regular fa-copy', 'Copy')
               DOM.copyBtn.classList.remove('copied')
               DOM.copyStatus.textContent = ''
               copyTimeoutId = null
@@ -1657,19 +2131,19 @@
           .catch(function (error) {
             if (copyRequestId !== currentRequestId) return
             console.error('Failed to copy XML to clipboard:', error)
-            DOM.copyBtn.innerHTML =
-              '<i class="fa-solid fa-xmark" aria-hidden="true"></i> Failed'
+            setCopyButtonState('fa-solid fa-xmark', 'Failed')
             DOM.copyBtn.classList.remove('copied')
             DOM.copyStatus.textContent = 'Failed to copy XML to clipboard'
             copyTimeoutId = setTimeout(function () {
               if (copyRequestId !== currentRequestId) return
-              DOM.copyBtn.innerHTML =
-                '<i class="fa-regular fa-copy" aria-hidden="true"></i> Copy'
+              setCopyButtonState('fa-regular fa-copy', 'Copy')
               DOM.copyStatus.textContent = ''
               copyTimeoutId = null
             }, 2000)
           })
       }
+
+      const MAX_ASN1_DEPTH = 32
 
       function parseCertificate(base64Cert) {
         try {
@@ -1680,11 +2154,26 @@
           }
 
           // Parse ASN.1 DER structure
-          const cert = parseASN1(bytes, 0)
+          const cert = parseASN1(bytes, 0, 0)
+          if (
+            cert.tag !== 0x30 ||
+            cert.totalLength !== bytes.length ||
+            !cert.children ||
+            cert.children.length < 3
+          ) {
+            throw new Error('Invalid X.509 certificate structure')
+          }
 
           // Certificate structure: SEQUENCE { tbsCertificate, signatureAlgorithm, signature }
           const tbsCert = cert.children[0]
           const sigAlgSeq = cert.children[1]
+          if (
+            tbsCert.tag !== 0x30 ||
+            !tbsCert.children ||
+            tbsCert.children.length < 6
+          ) {
+            throw new Error('Invalid TBSCertificate structure')
+          }
 
           // TBS Certificate structure
           let idx = 0
@@ -1692,6 +2181,9 @@
           // Version (optional, tagged [0])
           if (tbsCert.children[idx].tag === 0xa0) {
             idx++
+          }
+          if (tbsCert.children.length < idx + 5) {
+            throw new Error('Invalid TBSCertificate field count')
           }
 
           // Serial number
@@ -1707,6 +2199,9 @@
 
           // Validity
           const validity = tbsCert.children[idx]
+          if (!validity || !validity.children || validity.children.length < 2) {
+            throw new Error('Invalid certificate validity structure')
+          }
           const notBefore = parseTime(validity.children[0])
           const notAfter = parseTime(validity.children[1])
 
@@ -1745,29 +2240,73 @@
           DOM.certSubject.textContent = subject
 
           // Signature algorithm OID
+          if (
+            sigAlgSeq.tag !== 0x30 ||
+            !sigAlgSeq.children ||
+            !sigAlgSeq.children[0]
+          ) {
+            throw new Error('Invalid signature algorithm structure')
+          }
           const sigAlgOid = parseOID(sigAlgSeq.children[0].bytes)
           DOM.certSigAlg.textContent = SIG_ALG_MAP[sigAlgOid] || sigAlgOid
         } catch (e) {
           console.error('Certificate parsing error:', e)
+          DOM.certSubject.textContent = '-'
           DOM.certIssuer.textContent = 'Failed to parse certificate'
+          setFieldStatus(DOM.certNotBefore, '-')
+          setFieldStatus(DOM.certNotAfter, '-')
+          DOM.certSigAlg.textContent = '-'
         }
       }
 
-      function parseASN1(bytes, offset) {
+      function parseASN1(bytes, offset, depth) {
+        const currentDepth = typeof depth === 'number' ? depth : 0
+        if (currentDepth > MAX_ASN1_DEPTH) {
+          throw new Error('Maximum ASN.1 nesting depth exceeded')
+        }
+        if (!bytes || offset < 0 || offset + 2 > bytes.length) {
+          throw new Error('Unexpected end of ASN.1 data')
+        }
+
         const tag = bytes[offset]
+        if ((tag & 0x1f) === 0x1f) {
+          throw new Error('High-tag-number ASN.1 identifiers are not supported')
+        }
         let len = bytes[offset + 1]
         let lenBytes = 1
 
         if (len & 0x80) {
           const numLenBytes = len & 0x7f
+          if (numLenBytes === 0) {
+            throw new Error('Indefinite length ASN.1 encoding is not supported')
+          }
+          if (numLenBytes > 4) {
+            throw new Error('ASN.1 length field exceeds 4 bytes')
+          }
+          if (offset + 2 + numLenBytes > bytes.length) {
+            throw new Error('Truncated ASN.1 length field')
+          }
+          if (bytes[offset + 2] === 0) {
+            throw new Error(
+              'Non-minimal ASN.1 length encoding (leading zero byte)'
+            )
+          }
           len = 0
           for (let i = 0; i < numLenBytes; i++) {
-            len = (len << 8) | bytes[offset + 2 + i]
+            len = len * 256 + bytes[offset + 2 + i]
+          }
+          if (len < 128) {
+            throw new Error(
+              'Non-minimal ASN.1 long-form length encoding (< 128)'
+            )
           }
           lenBytes = 1 + numLenBytes
         }
 
         const contentStart = offset + 1 + lenBytes
+        if (contentStart + len > bytes.length) {
+          throw new Error('ASN.1 element length exceeds available bytes')
+        }
         const contentBytes = bytes.slice(contentStart, contentStart + len)
 
         const result = {
@@ -1782,7 +2321,10 @@
           result.children = []
           let childOffset = 0
           while (childOffset < len) {
-            const child = parseASN1(contentBytes, childOffset)
+            const child = parseASN1(contentBytes, childOffset, currentDepth + 1)
+            if (child.totalLength <= 0) {
+              throw new Error('Invalid zero-length ASN.1 child element')
+            }
             result.children.push(child)
             childOffset += child.totalLength
           }
@@ -1792,35 +2334,222 @@
       }
 
       function parseName(nameSeq) {
+        if (
+          !nameSeq ||
+          nameSeq.tag !== 0x30 ||
+          !Array.isArray(nameSeq.children)
+        ) {
+          throw new Error('Invalid X.509 Name structure')
+        }
         const parts = []
         for (const rdn of nameSeq.children) {
-          const atv = rdn.children[0]
-          const oid = parseOID(atv.children[0].bytes)
-          const value = decodeString(atv.children[1])
-          const name = OID_MAP[oid] || oid
-          parts.push(name + '=' + value)
+          if (!rdn.children || rdn.children.length === 0) {
+            throw new Error('Invalid X.509 RelativeDistinguishedName structure')
+          }
+          for (const atv of rdn.children) {
+            if (!atv.children || atv.children.length < 2) {
+              throw new Error('Invalid X.509 AttributeTypeAndValue structure')
+            }
+            const oid = parseOID(atv.children[0].bytes)
+            const value = decodeString(atv.children[1])
+            const name = OID_MAP[oid] || oid
+            parts.push(name + '=' + value)
+          }
         }
-        return parts.join(', ')
+        return parts.join(', ') || '-'
       }
 
-      function parseOID(bytes) {
-        const parts = []
-        parts.push(Math.floor(bytes[0] / 40))
-        parts.push(bytes[0] % 40)
+      // Maximum base-128 bytes per OID subidentifier (20 bytes = 140 bits, covering 128-bit UUID arcs)
+      const MAX_OID_ARC_BYTES = 20
 
-        let value = 0
-        for (let i = 1; i < bytes.length; i++) {
-          value = (value << 7) | (bytes[i] & 0x7f)
-          if (!(bytes[i] & 0x80)) {
-            parts.push(value)
-            value = 0
+      function parseOID(bytes) {
+        if (!bytes || bytes.length === 0) {
+          return ''
+        }
+        const parts = []
+        let value = 0n
+        let arcBytes = 0
+        let isFirstSubId = true
+
+        for (let i = 0; i < bytes.length; i++) {
+          if (arcBytes === 0 && bytes[i] === 0x80) {
+            throw new Error('Non-minimal OID subidentifier encoding')
           }
+          arcBytes++
+          if (arcBytes > MAX_OID_ARC_BYTES) {
+            throw new Error('OID arc exceeds maximum supported length')
+          }
+          value = (value << 7n) | BigInt(bytes[i] & 0x7f)
+          if (!(bytes[i] & 0x80)) {
+            if (isFirstSubId) {
+              const first = value < 40n ? 0n : value < 80n ? 1n : 2n
+              const second = value - first * 40n
+              parts.push(first.toString())
+              parts.push(second.toString())
+              isFirstSubId = false
+            } else {
+              parts.push(value.toString())
+            }
+            value = 0n
+            arcBytes = 0
+          }
+        }
+        if (arcBytes > 0) {
+          throw new Error('Unterminated OID arc')
         }
         return parts.join('.')
       }
 
+      const T61_DIACRITICS = {
+        0xc1: ['\u0300', '`'],
+        0xc2: ['\u0301', '\u00b4'],
+        0xc3: ['\u0302', '^'],
+        0xc4: ['\u0303', '~'],
+        0xc5: ['\u0304', '\u00af'],
+        0xc6: ['\u0306', '\u02d8'],
+        0xc7: ['\u0307', '\u02d9'],
+        0xc8: ['\u0308', '\u00a8'],
+        0xca: ['\u030a', '\u02da'],
+        0xcb: ['\u0327', '\u00b8'],
+        0xcc: ['\u0332', '_'],
+        0xcd: ['\u030b', '\u02dd'],
+        0xce: ['\u0328', '\u02db'],
+        0xcf: ['\u030c', '\u02c7']
+      }
+
+      const T61_G1_MAP = {
+        0xa0: '\u00a0',
+        0xa1: '\u00a1',
+        0xa2: '\u00a2',
+        0xa3: '\u00a3',
+        0xa4: '$',
+        0xa5: '\u00a5',
+        0xa6: '#',
+        0xa7: '\u00a7',
+        0xa8: '\u00a4',
+        0xaa: '\u201c',
+        0xab: '\u00ab',
+        0xac: '\u2190',
+        0xad: '\u2191',
+        0xae: '\u2192',
+        0xaf: '\u2193',
+        0xb0: '\u00b0',
+        0xb1: '\u00b1',
+        0xb2: '\u00b2',
+        0xb3: '\u00b3',
+        0xb4: '\u00d7',
+        0xb5: '\u00b5',
+        0xb6: '\u00b6',
+        0xb7: '\u00b7',
+        0xb8: '\u00f7',
+        0xba: '\u201d',
+        0xbb: '\u00bb',
+        0xbc: '\u00bc',
+        0xbd: '\u00bd',
+        0xbe: '\u00be',
+        0xbf: '\u00bf',
+        0xe0: '\u2126',
+        0xe1: '\u00c6',
+        0xe2: '\u0110',
+        0xe3: '\u00aa',
+        0xe4: '\u0126',
+        0xe6: '\u0132',
+        0xe7: '\u013f',
+        0xe8: '\u0141',
+        0xe9: '\u00d8',
+        0xea: '\u0152',
+        0xeb: '\u00ba',
+        0xec: '\u00de',
+        0xed: '\u0166',
+        0xee: '\u014a',
+        0xef: '\u0149',
+        0xf0: '\u0138',
+        0xf1: '\u00e6',
+        0xf2: '\u0111',
+        0xf3: '\u00f0',
+        0xf4: '\u0127',
+        0xf5: '\u0131',
+        0xf6: '\u0133',
+        0xf7: '\u0140',
+        0xf8: '\u0142',
+        0xf9: '\u00f8',
+        0xfa: '\u0153',
+        0xfb: '\u00df',
+        0xfc: '\u00fe',
+        0xfd: '\u0167',
+        0xfe: '\u014b',
+        0xff: '\u00ad'
+      }
+
+      function decodeTeletexString(bytes) {
+        const chars = []
+        for (let i = 0; i < bytes.length; i++) {
+          const b = bytes[i]
+          if (Object.prototype.hasOwnProperty.call(T61_DIACRITICS, b)) {
+            if (i + 1 >= bytes.length) {
+              throw new Error('Truncated T.61 diacritic in TeletexString')
+            }
+            const next = bytes[i + 1]
+            if (next === 0x20) {
+              chars.push(T61_DIACRITICS[b][1])
+              i++
+              continue
+            }
+            const isAsciiLetter =
+              (next >= 0x41 && next <= 0x5a) || (next >= 0x61 && next <= 0x7a)
+            if (!isAsciiLetter) {
+              throw new Error(
+                'Invalid T.61 diacritic combination in TeletexString'
+              )
+            }
+            chars.push(String.fromCharCode(next) + T61_DIACRITICS[b][0])
+            i++
+          } else if (b >= 0x20 && b <= 0x7e) {
+            chars.push(String.fromCharCode(b))
+          } else if (Object.prototype.hasOwnProperty.call(T61_G1_MAP, b)) {
+            chars.push(T61_G1_MAP[b])
+          } else {
+            throw new Error('Unsupported byte in TeletexString')
+          }
+        }
+        return chars.join('').normalize('NFC')
+      }
+
       function decodeString(node) {
-        const decoder = new TextDecoder('utf-8')
+        if (!node || !node.bytes) {
+          throw new Error('Missing ASN.1 string value')
+        }
+        if (node.tag === 0x1e) {
+          if (node.bytes.length % 2 !== 0) {
+            throw new Error('Invalid BMPString byte length')
+          }
+          return new TextDecoder('utf-16be', { fatal: true }).decode(node.bytes)
+        }
+        if (node.tag === 0x14) {
+          return decodeTeletexString(node.bytes)
+        }
+        if (node.tag === 0x1c) {
+          if (node.bytes.length % 4 !== 0) {
+            throw new Error('Invalid UniversalString byte length')
+          }
+          const chars = []
+          for (let i = 0; i < node.bytes.length; i += 4) {
+            const codePoint =
+              ((node.bytes[i] << 24) >>> 0) +
+              (node.bytes[i + 1] << 16) +
+              (node.bytes[i + 2] << 8) +
+              node.bytes[i + 3]
+            if (
+              codePoint > 0x10ffff ||
+              (codePoint >= 0xd800 && codePoint <= 0xdfff)
+            ) {
+              throw new Error('Invalid Unicode code point in UniversalString')
+            }
+            chars.push(String.fromCodePoint(codePoint))
+          }
+          return chars.join('')
+        }
+        const decoder = new TextDecoder('utf-8', { fatal: true })
         return decoder.decode(node.bytes)
       }
 
@@ -1828,22 +2557,22 @@
         const str = decodeString(node)
         if (node.tag === 0x17) {
           // UTCTime: YYMMDDHHMMSSZ
-          let year = parseInt(str.substr(0, 2))
+          let year = parseInt(str.slice(0, 2), 10)
           year += year >= 50 ? 1900 : 2000
-          const month = parseInt(str.substr(2, 2)) - 1
-          const day = parseInt(str.substr(4, 2))
-          const hour = parseInt(str.substr(6, 2))
-          const min = parseInt(str.substr(8, 2))
-          const sec = parseInt(str.substr(10, 2))
+          const month = parseInt(str.slice(2, 4), 10) - 1
+          const day = parseInt(str.slice(4, 6), 10)
+          const hour = parseInt(str.slice(6, 8), 10)
+          const min = parseInt(str.slice(8, 10), 10)
+          const sec = parseInt(str.slice(10, 12), 10)
           return new Date(Date.UTC(year, month, day, hour, min, sec))
         } else {
           // GeneralizedTime: YYYYMMDDHHMMSSZ
-          const year = parseInt(str.substr(0, 4))
-          const month = parseInt(str.substr(4, 2)) - 1
-          const day = parseInt(str.substr(6, 2))
-          const hour = parseInt(str.substr(8, 2))
-          const min = parseInt(str.substr(10, 2))
-          const sec = parseInt(str.substr(12, 2))
+          const year = parseInt(str.slice(0, 4), 10)
+          const month = parseInt(str.slice(4, 6), 10) - 1
+          const day = parseInt(str.slice(6, 8), 10)
+          const hour = parseInt(str.slice(8, 10), 10)
+          const min = parseInt(str.slice(10, 12), 10)
+          const sec = parseInt(str.slice(12, 14), 10)
           return new Date(Date.UTC(year, month, day, hour, min, sec))
         }
       }
@@ -1852,6 +2581,14 @@
         // Current time for all validity checks
         const now = new Date()
 
+        // Detect EncryptedAssertion when no plain Assertion is present
+        const assertion =
+          xmlDoc.querySelector('Assertion') ||
+          xmlDoc.querySelector('*|Assertion')
+        const encryptedAssertion =
+          xmlDoc.querySelector('EncryptedAssertion') ||
+          xmlDoc.querySelector('*|EncryptedAssertion')
+
         // NameID
         const nameId =
           xmlDoc.querySelector('NameID') || xmlDoc.querySelector('*|NameID')
@@ -1859,18 +2596,25 @@
           DOM.nameIdFormat.textContent =
             nameId.getAttribute('Format') || 'Not specified'
           DOM.nameIdValue.textContent = nameId.textContent
+        } else if (encryptedAssertion && !assertion) {
+          DOM.nameIdFormat.textContent = 'EncryptedAssertion'
+          setFieldStatus(
+            DOM.nameIdValue,
+            'Assertion is encrypted (decrypt with SP private key to inspect fields)',
+            'warning'
+          )
         }
 
         // Issuer (from Response or Assertion)
         const issuer =
           xmlDoc.querySelector('Issuer') || xmlDoc.querySelector('*|Issuer')
         if (issuer) {
-          DOM.samlIssuer.textContent = issuer.textContent
+          DOM.samlIssuer.textContent = issuer.textContent.trim()
         }
 
         // Destination
         const response = xmlDoc.documentElement
-        const destination = response.getAttribute('Destination')
+        const destination = response && response.getAttribute('Destination')
         if (destination) {
           DOM.samlDestination.textContent = destination
         }
@@ -2017,7 +2761,7 @@
         const attributes = xmlDoc.querySelectorAll('Attribute, *|Attribute')
 
         // Clear previous attributes
-        DOM.attributesBody.innerHTML = ''
+        DOM.attributesBody.textContent = ''
 
         if (attributes.length === 0) {
           DOM.attributesSection.style.display = 'none'
@@ -2026,15 +2770,28 @@
 
         let hasVisibleAttributes = false
 
-        attributes.forEach((attr) => {
+        attributes.forEach(function (attr) {
           const name = attr.getAttribute('Name') || ''
+          const explicitFriendlyName = attr.getAttribute('FriendlyName') || ''
 
-          // Get friendly name from the full URL/URN
+          // Get friendly name from the full URL/URN, falling back to FriendlyName attribute
           let friendlyName = name
           if (name.includes('/')) {
-            friendlyName = name.split('/').pop()
+            friendlyName =
+              name.split('/').filter(Boolean).pop() || explicitFriendlyName
           } else if (name.includes(':')) {
-            friendlyName = name.split(':').pop()
+            friendlyName =
+              name.split(':').filter(Boolean).pop() || explicitFriendlyName
+          }
+
+          const isDottedOid =
+            friendlyName.includes('.') &&
+            friendlyName.split('.').every(function (segment) {
+              return segment.length > 0 && /^\d+$/.test(segment)
+            })
+
+          if (explicitFriendlyName && (!friendlyName || isDottedOid)) {
+            friendlyName = explicitFriendlyName
           }
 
           // Skip excluded attributes
@@ -2042,17 +2799,38 @@
             return
           }
 
-          const valueEl = attr.querySelector('AttributeValue, *|AttributeValue')
-          const value = valueEl ? valueEl.textContent : ''
+          // Collect only direct child AttributeValue elements so structured XML descendants are not duplicated
+          const values = []
+          Array.from(attr.childNodes).forEach(function (node) {
+            if (
+              node.nodeType === 1 &&
+              (node.localName === 'AttributeValue' ||
+                node.nodeName === 'AttributeValue' ||
+                node.nodeName.endsWith(':AttributeValue')) &&
+              node.textContent
+            ) {
+              values.push(node.textContent)
+            }
+          })
 
-          if (value) {
+          if (values.length > 0) {
             hasVisibleAttributes = true
             const fieldDiv = document.createElement('div')
             fieldDiv.className = 'field'
-            fieldDiv.innerHTML = `
-            <div class="field-label">${escapeHtml(friendlyName)}</div>
-            <div class="field-value">${escapeHtml(value)}</div>
-          `
+
+            const labelDiv = document.createElement('div')
+            labelDiv.className = 'field-label'
+            labelDiv.textContent = friendlyName
+            if (name && name !== friendlyName) {
+              labelDiv.title = name
+            }
+
+            const valueDiv = document.createElement('div')
+            valueDiv.className = 'field-value'
+            valueDiv.textContent = values.join(', ')
+
+            fieldDiv.appendChild(labelDiv)
+            fieldDiv.appendChild(valueDiv)
             DOM.attributesBody.appendChild(fieldDiv)
           }
         })
@@ -2062,22 +2840,30 @@
           : 'none'
       }
 
-      function escapeHtml(text) {
-        const div = document.createElement('div')
-        div.textContent = text
-        return div.innerHTML
-      }
-
       function clearAll() {
         DOM.samlInput.value = ''
         resetResults()
       }
 
-      // Add event listener for copy button
+      // Attach event listeners using named functions and event.currentTarget
+      DOM.decodeBtn.addEventListener('click', decode)
+      DOM.clearBtn.addEventListener('click', clearAll)
       DOM.copyBtn.addEventListener('click', copyXml)
-
-      // Add event listener for theme toggle
       DOM.themeToggle.addEventListener('click', toggleTheme)
+
+      document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+        overlay.addEventListener('click', handleModalOverlayClick)
+      })
+      document
+        .querySelectorAll('[data-modal-open]')
+        .forEach(function (openBtn) {
+          openBtn.addEventListener('click', handleModalOpenClick)
+        })
+      document
+        .querySelectorAll('[data-modal-close]')
+        .forEach(function (closeBtn) {
+          closeBtn.addEventListener('click', handleModalCloseClick)
+        })
     </script>
   </body>
 </html>
