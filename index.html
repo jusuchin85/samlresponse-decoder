@@ -1545,14 +1545,14 @@
           } catch (e) {
             break
           }
+          if (
+            wasQueryParam &&
+            (xmlCandidate.startsWith('<') || xmlCandidate.startsWith('\uFEFF<'))
+          ) {
+            cleaned = xmlCandidate
+            break
+          }
           if (cleaned.startsWith('<') || cleaned.startsWith('\uFEFF<')) {
-            if (
-              wasQueryParam &&
-              (xmlCandidate.startsWith('<') ||
-                xmlCandidate.startsWith('\uFEFF<'))
-            ) {
-              cleaned = xmlCandidate
-            }
             break
           }
         }
