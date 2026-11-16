@@ -1870,19 +1870,22 @@
        * @param {string} xmlString - Decoded XML text
        */
       function assertSafeSamlXml(xmlString) {
-        const candidate = xmlString.trim()
+        const candidate = xmlString.replace(/^\uFEFF/, '').trim()
+        const markupOutsideCommentsAndCdata = candidate.replace(
+          /<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]/g,
+          ''
+        )
+        const markupWithoutDeclaration = markupOutsideCommentsAndCdata.replace(
+          /^<\?xml\s+[^?]*\?>/,
+          ''
+        )
 
         // Disallow potentially dangerous XML constructs
-        if (/<!(DOCTYPE|ENTITY)\b/i.test(candidate) || /<\?/i.test(candidate)) {
-          throw new Error('Unsupported XML construct in SAML response')
-        }
-
-        // Only allow expected SAML top-level payloads
         if (
-          !/^<(\w+:)?Response\b/.test(candidate) &&
-          !/^<(\w+:)?AuthnRequest\b/.test(candidate)
+          /<!DOCTYPE\b|<!ENTITY\b/i.test(markupWithoutDeclaration) ||
+          /<\?/.test(markupWithoutDeclaration)
         ) {
-          throw new Error('Input is not a supported SAML XML document')
+          throw new Error('Unsupported XML construct in SAML response')
         }
       }
 
@@ -1895,6 +1898,17 @@
         const parseError = xmlDoc.querySelector('parsererror')
         if (parseError) {
           throw new Error('Invalid XML: ' + parseError.textContent)
+        }
+
+        const root = xmlDoc.documentElement
+        const supportedRootName =
+          root && (root.localName === 'Response' || root.localName === 'AuthnRequest')
+        const supportedNamespace =
+          root &&
+          (root.namespaceURI === 'urn:oasis:names:tc:SAML:2.0:protocol' ||
+            !root.namespaceURI)
+        if (!supportedRootName || !supportedNamespace) {
+          throw new Error('Input is not a supported SAML XML document')
         }
 
         // Extract certificate (supporting namespace-prefixed ds:X509Certificate)
