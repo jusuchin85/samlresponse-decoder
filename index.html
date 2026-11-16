@@ -1869,7 +1869,25 @@
        * Parse and render a decoded SAML XML string.
        * @param {string} xmlString - Decoded XML text
        */
+      function assertSafeSamlXml(xmlString) {
+        const candidate = xmlString.trim()
+
+        // Disallow potentially dangerous XML constructs
+        if (/<!(DOCTYPE|ENTITY)\b/i.test(candidate) || /<\?/i.test(candidate)) {
+          throw new Error('Unsupported XML construct in SAML response')
+        }
+
+        // Only allow expected SAML top-level payloads
+        if (
+          !/^<(\w+:)?Response\b/.test(candidate) &&
+          !/^<(\w+:)?AuthnRequest\b/.test(candidate)
+        ) {
+          throw new Error('Input is not a supported SAML XML document')
+        }
+      }
+
       function processDecodedXml(xmlString) {
+        assertSafeSamlXml(xmlString)
         const parser = new DOMParser()
         const xmlDoc = parser.parseFromString(xmlString, 'application/xml')
 
