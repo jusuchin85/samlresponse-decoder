@@ -1869,7 +1869,110 @@
        * Parse and render a decoded SAML XML string.
        * @param {string} xmlString - Decoded XML text
        */
+      function assertSafeSamlXml(xmlString) {
+        const candidate = xmlString.replace(/^\uFEFF/, '').trim()
+        let index = 0
+        let rootFound = false
+
+        while (index < candidate.length) {
+          const markupStart = candidate.indexOf('<', index)
+          if (markupStart === -1) break
+          index = markupStart
+
+          if (candidate.startsWith('<!--', index)) {
+            const commentEnd = candidate.indexOf('-->', index + 4)
+            if (commentEnd === -1) {
+              throw new Error('Unsupported XML construct in SAML response')
+            }
+            index = commentEnd + 3
+            continue
+          }
+
+          if (candidate.startsWith('<![CDATA[', index)) {
+            const cdataEnd = candidate.indexOf(']]>', index + 9)
+            if (cdataEnd === -1) {
+              throw new Error('Unsupported XML construct in SAML response')
+            }
+            index = cdataEnd + 3
+            continue
+          }
+
+          if (candidate.startsWith('<?', index)) {
+            const isXmlDeclaration =
+              index === 0 &&
+              candidate.startsWith('<?xml', index) &&
+              /\s/.test(candidate[index + 5] || '')
+            const declarationEnd = candidate.indexOf('?>', index + 2)
+            if (!isXmlDeclaration || declarationEnd === -1) {
+              throw new Error('Unsupported XML construct in SAML response')
+            }
+            index = declarationEnd + 2
+            continue
+          }
+
+          const declaration = candidate.slice(index, index + 9).toUpperCase()
+          const entityDeclaration = candidate.slice(index, index + 8).toUpperCase()
+          if (
+            declaration === '<!DOCTYPE' ||
+            entityDeclaration === '<!ENTITY' ||
+            candidate.startsWith('<!', index)
+          ) {
+            throw new Error('Unsupported XML construct in SAML response')
+          }
+
+          if (!rootFound && candidate[index + 1] !== '/') {
+            let nameEnd = index + 1
+            while (
+              nameEnd < candidate.length &&
+              !/[\s/>]/.test(candidate[nameEnd])
+            ) {
+              nameEnd++
+            }
+            const qualifiedName = candidate.slice(index + 1, nameEnd)
+            const colonIndex = qualifiedName.indexOf(':')
+            const localName =
+              colonIndex === -1
+                ? qualifiedName
+                : qualifiedName.slice(colonIndex + 1)
+            const hasValidPrefix =
+              colonIndex === -1 ||
+              (colonIndex > 0 && colonIndex === qualifiedName.lastIndexOf(':'))
+            if (
+              !qualifiedName ||
+              !hasValidPrefix ||
+              (localName !== 'Response' && localName !== 'AuthnRequest')
+            ) {
+              throw new Error('Input is not a supported SAML XML document')
+            }
+            rootFound = true
+          }
+
+          let tagEnd = index + 1
+          let quote = null
+          while (tagEnd < candidate.length) {
+            const character = candidate[tagEnd]
+            if (quote) {
+              if (character === quote) quote = null
+            } else if (character === '"' || character === "'") {
+              quote = character
+            } else if (character === '>') {
+              break
+            }
+            tagEnd++
+          }
+          if (tagEnd === candidate.length) {
+            throw new Error('Unsupported XML construct in SAML response')
+          }
+          index = tagEnd + 1
+        }
+
+        if (!rootFound) {
+          throw new Error('Input is not a supported SAML XML document')
+        }
+      }
+
       function processDecodedXml(xmlString) {
+        assertSafeSamlXml(xmlString)
         const parser = new DOMParser()
         const xmlDoc = parser.parseFromString(xmlString, 'application/xml')
 
@@ -1877,6 +1980,17 @@
         const parseError = xmlDoc.querySelector('parsererror')
         if (parseError) {
           throw new Error('Invalid XML: ' + parseError.textContent)
+        }
+
+        const root = xmlDoc.documentElement
+        const supportedRootName =
+          root && (root.localName === 'Response' || root.localName === 'AuthnRequest')
+        const supportedNamespace =
+          root &&
+          (root.namespaceURI === 'urn:oasis:names:tc:SAML:2.0:protocol' ||
+            !root.namespaceURI)
+        if (!supportedRootName || !supportedNamespace) {
+          throw new Error('Input is not a supported SAML XML document')
         }
 
         // Extract certificate (supporting namespace-prefixed ds:X509Certificate)
